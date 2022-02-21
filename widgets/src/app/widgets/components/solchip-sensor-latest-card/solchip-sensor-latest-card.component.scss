@@ -1,0 +1,19 @@
+/**
+ * Copyright © 2021 ThingsBoard, Inc.
+ */
+
+.tbDatasource-table {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+  font-weight: 100;
+  text-align: right;
+  color: #fff;
+  box-shadow: 0 0 0 !important;
+
+  td {
+    border-bottom: 0px;
+    border-top: 0px;
+  }
+}
