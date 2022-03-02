@@ -27,7 +27,7 @@ export class SolchipSensorLatestCardComponent implements OnInit {
   @Input()
   ctx: WidgetContext;
 
-  public value: number;
+  public value: number = 0;
   public measurementUnit: string;
 
   private widgetConfig: WidgetConfig;
@@ -50,15 +50,6 @@ export class SolchipSensorLatestCardComponent implements OnInit {
   ngOnInit() {
     this.widgetConfig = this.ctx.widgetConfig;
     const stateParams: StateParams = this.ctx?.stateController?.getStateParams();
-    // const mockStateParams = {
-    //   entityId: {
-    //     id: "6f244a70-909c-11ec-9e75-119a546d024c",
-    //     entityType: EntityType.ENTITY_VIEW
-    //   },
-    //   keyToPropagate: "soil_tention1",
-    //   measurementUnit: "kPa"
-    // };
-    console.warn('stateParams', stateParams);
     this.createSensorSubscription(stateParams);
     this.setUnit(stateParams.measurementUnit);
   }
@@ -69,7 +60,7 @@ export class SolchipSensorLatestCardComponent implements OnInit {
     }
   }
 
-  public onDataUpdated(subscription: IWidgetSubscription, detectChanges: boolean) {
+  public onDataUpdated(subscription: IWidgetSubscription, detectChanges: boolean = true) {
     let value;
     const data = subscription.data;
     if (data.length) {
@@ -78,11 +69,12 @@ export class SolchipSensorLatestCardComponent implements OnInit {
         value = keyData.data[0][1];
       }
     }
-    this.setValue(value);
+    if (value) {
+      this.setValue(value);
+    }
     if (detectChanges) {
       this.ctx.detectChanges();
     }
-
   }
 
   private setValue(value: number) {
@@ -98,24 +90,15 @@ export class SolchipSensorLatestCardComponent implements OnInit {
       entityId: stateParams.entityId.id
     }];
     subscriptionsInfo[0].timeseries = [{
-      name: stateParams.keyToPropagate
+      name: 'soil_temperature4'
     }];
+    /*subscriptionsInfo[0].timeseries = [{
+      name: stateParams.keyToPropagate
+    }];*/
     this.ctx.subscriptionApi.createSubscriptionFromInfo(widgetType.latest, subscriptionsInfo, this.subscriptionOptions, false, true).subscribe(
       subscription => {
         this.subscription = subscription;
       }
     );
   }
-
-  /*private getRelatedSoltag(soltagId) {
-    this.entityRelationService.findByFrom(soltagId).subscribe(
-      data => {
-        const relations = data[0];
-        if (relations.to.entityType === EntityType.DEVICE) {
-          this.port = relations.type;
-          this.createSubscription(relations);
-        }
-      }
-    )
-  }*/
 }
