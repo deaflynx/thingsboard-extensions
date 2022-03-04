@@ -4,7 +4,6 @@
 
 -->
 <div class="solchip-latest-value-container">
-  <h1>
-    {{ value }} {{ measurementUnit }}
-  </h1>
+  <span style="font-weight: 600; font-size:2em">{{ value }} {{ measurementUnit }} </span>
+  <span style="font-weight: 400;">at {{ timestamp | date :  'yyyy-MM-dd HH:mm:ss' }}</span>
 </div>

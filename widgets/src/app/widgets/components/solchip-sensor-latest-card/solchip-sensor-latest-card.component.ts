@@ -29,6 +29,7 @@ export class SolchipSensorLatestCardComponent implements OnInit {
 
   public value: number = 0;
   public measurementUnit: string;
+  public timestamp: number;
 
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
@@ -37,9 +38,6 @@ export class SolchipSensorLatestCardComponent implements OnInit {
     callbacks: {
       onDataUpdated: (subscription, detectChanges) => this.ctx.ngZone.run(() => {
         this.onDataUpdated(subscription, detectChanges);
-      }),
-      onDataUpdateError: (subscription, e) => this.ctx.ngZone.run(() => {
-        // this.onDataUpdateError(subscription, e);
       }),
       dataLoading: () => {}
     }
@@ -67,6 +65,7 @@ export class SolchipSensorLatestCardComponent implements OnInit {
       const keyData = data[0];
       if (keyData?.data[0]) {
         value = keyData.data[0][1];
+        this.timestamp = keyData.data[0][0];
       }
     }
     if (value) {
@@ -90,11 +89,8 @@ export class SolchipSensorLatestCardComponent implements OnInit {
       entityId: stateParams.entityId.id
     }];
     subscriptionsInfo[0].timeseries = [{
-      name: 'soil_temperature4'
-    }];
-    /*subscriptionsInfo[0].timeseries = [{
       name: stateParams.keyToPropagate
-    }];*/
+    }];
     this.ctx.subscriptionApi.createSubscriptionFromInfo(widgetType.latest, subscriptionsInfo, this.subscriptionOptions, false, true).subscribe(
       subscription => {
         this.subscription = subscription;
