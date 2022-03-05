@@ -4,18 +4,18 @@
 
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SolchipSensorLatestCardComponent } from './solchip-sensor-latest-card.component';
+import { SolchipSensorsGraphComponent } from './solchip-sensors-graph.component';
 
 @NgModule({
   declarations: [
-    SolchipSensorLatestCardComponent
+    SolchipSensorsGraphComponent
   ],
   imports: [
     CommonModule
   ],
   exports: [
-    SolchipSensorLatestCardComponent
+    SolchipSensorsGraphComponent
   ]
 })
-export class SolchipSensorLatestCardModule {
+export class SolchipSensorsGraphModule {
 }

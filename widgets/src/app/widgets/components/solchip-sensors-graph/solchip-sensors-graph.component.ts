@@ -19,10 +19,10 @@ import { StateParams } from '@core/api/widget-api.models';
 
 @Component({
   selector: 'solchip-sensor-latest-card',
-  templateUrl: './solchip-sensor-latest-card.component.html',
-  styleUrls: ['./solchip-sensor-latest-card.component.scss']
+  templateUrl: './solchip-sensors-graph.component.html',
+  styleUrls: ['./solchip-sensors-graph.component.scss']
 })
-export class SolchipSensorLatestCardComponent implements OnInit {
+export class SolchipSensorsGraphComponent implements OnInit {
 
   @Input()
   ctx: WidgetContext;
@@ -48,8 +48,8 @@ export class SolchipSensorLatestCardComponent implements OnInit {
   ngOnInit() {
     this.widgetConfig = this.ctx.widgetConfig;
     const stateParams: StateParams = this.ctx?.stateController?.getStateParams();
-    this.createSensorSubscription(stateParams);
-    this.setUnit(stateParams.measurementUnit);
+    /*this.createSensorSubscription(stateParams);
+    this.setUnit(stateParams.measurementUnit);*/
   }
 
   private setUnit(measurementUnit: string) {

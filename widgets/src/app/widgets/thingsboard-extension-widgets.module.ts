@@ -6,7 +6,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import addCustomWidgetLocale from './locale/custom-widget-locale.constant';
-import { SolchipSensorLatestCardModule } from './components/solchip-sensor-latest-card/solchip-sensor-latest-card.module';
+import { SolchipSensorsGraphModule } from './components/solchip-sensors-graph/solchip-sensors-graph.module';
 import { SharedModule } from '@shared/public-api';
 import { HomeComponentsModule } from '@home/components/public-api';
 
@@ -18,7 +18,7 @@ import { HomeComponentsModule } from '@home/components/public-api';
     SharedModule
   ],
   exports: [
-    SolchipSensorLatestCardModule
+    SolchipSensorsGraphModule
   ]
 })
 export class ThingsboardExtensionWidgetsModule {
