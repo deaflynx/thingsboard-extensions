@@ -1312,6 +1312,11 @@
     merge-source-map "^1.1.0"
     schema-utils "^2.7.0"
 
+"@juggle/resize-observer@^3.3.1":
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.3.1.tgz#b50a781709c81e10701004214340f25475a171a0"
+  integrity sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==
+
 "@mat-datetimepicker/core@^7.0.1":
   version "7.0.1"
   resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-7.0.1.tgz#dac547195f25d448cfeaa11e0384f59639065c5f"
