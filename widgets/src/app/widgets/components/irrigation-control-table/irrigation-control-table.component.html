@@ -62,7 +62,7 @@
           <mat-cell *matCellDef="let entity">
             <mat-checkbox (click)="$event.stopPropagation()"
                           (change)="$event ? onCheckboxChage($event, entity.id) : null"
-                          [checked]="entity.valveStatus === 'Open'">
+                          [checked]="checkStatus(entity)">
             </mat-checkbox>
           </mat-cell>
         </ng-container>

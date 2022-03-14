@@ -886,11 +886,13 @@ export class IrrigationControlTableComponent extends PageComponent implements On
     this.rowStyleCache.length = 0;
   }
 
-  onCheckboxChage(event, entityId) {
-    let valveStatus = {key: 'valveStatus', value: event.checked ? 'Open' : 'Close'};
-
+  public onCheckboxChage(event, entityId) {
+    let valveStatus = { key: 'valveStatus', value: event.checked ? 'Open' : 'Close' };
+    let status = { key: 'status', value: event.checked ? 'Enabled' : 'Disabled' };
+    // @ts-ignore
+    let attrToUpdate = this.settings.attributeToUpdate === 'valveStatus' ? valveStatus : status;
     this.attributeService.saveEntityAttributes(entityId, AttributeScope.SERVER_SCOPE,
-      [valveStatus]).pipe(
+      [attrToUpdate]).pipe(
       this.ctx.rxjs.mergeMap(() => {
         return this.entityRelationService.findByFrom(entityId);
       }),
@@ -903,6 +905,15 @@ export class IrrigationControlTableComponent extends PageComponent implements On
         })
         return this.ctx.rxjs.of([]);
       })).subscribe();
+  }
+
+  public checkStatus(entity) {
+    // @ts-ignore
+    if (this.settings?.attributeToUpdate === 'valveStatus') {
+      return entity.valveStatus === 'Open'
+    }
+
+    return entity?.status === 'Enabled'
   }
 }
 
