@@ -19,6 +19,7 @@ import {MatDividerModule} from "@angular/material/divider";
 import {MatPaginatorModule} from "@angular/material/paginator";
 import {MatInputModule} from "@angular/material/input";
 import {MatCheckboxModule} from "@angular/material/checkbox";
+import {MatButtonModule} from "@angular/material/button";
 
 @NgModule({
   declarations: [
@@ -39,7 +40,8 @@ import {MatCheckboxModule} from "@angular/material/checkbox";
     MatDividerModule,
     MatPaginatorModule,
     MatInputModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatButtonModule
   ],
   exports: [
     IrrigationControlTableComponent
