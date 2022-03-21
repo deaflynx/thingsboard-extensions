@@ -9,7 +9,7 @@ import {MatToolbarModule} from "@angular/material/toolbar";
 import {MatTooltipModule} from "@angular/material/tooltip";
 import {MatIconModule} from "@angular/material/icon";
 import {MatFormFieldModule} from "@angular/material/form-field";
-import {ExtendedModule} from "@angular/flex-layout";
+import {ExtendedModule, FlexModule} from "@angular/flex-layout";
 import {FormsModule} from "@angular/forms";
 import {TranslateModule} from "@ngx-translate/core";
 import {MatTableModule} from "@angular/material/table";
@@ -41,7 +41,8 @@ import {MatButtonModule} from "@angular/material/button";
     MatPaginatorModule,
     MatInputModule,
     MatCheckboxModule,
-    MatButtonModule
+    MatButtonModule,
+    FlexModule
   ],
   exports: [
     IrrigationControlTableComponent
