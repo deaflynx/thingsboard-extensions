@@ -5,3 +5,4 @@
 export * from './alarm/public-api';
 export * from './example/public-api';
 export * from './map/public-api';
+export * from './custom-scheduler-events/public-api';
