@@ -41,14 +41,12 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
+import { PageComponent } from '@shared/public-api';
 import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+import { AppState } from '@core/public-api';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { UserPermissionsService } from '@core/http/user-permissions.service';
-import { Operation, Resource } from '@shared/models/security.models';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Authority } from '@shared/models/authority.enum';
+import { UserPermissionsService } from '@core/public-api';
+// import { Authority } from '@shared/models/authority.enum';
 import {
   SchedulerEvent,
   SchedulerEventWithCustomerInfo,
@@ -57,142 +55,45 @@ import {
   schedulerTimeUnitRepeatTranslationMap,
   schedulerWeekday
 } from '@shared/models/scheduler-event.models';
-import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
-import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of, ReplaySubject } from 'rxjs';
-import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import {
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  publishReplay,
-  refCount,
-  share,
-  skip,
-  take,
-  tap
-} from 'rxjs/operators';
-import { PageLink, PageQueryParam } from '@shared/models/page/page-link';
-import { SchedulerEventService } from '@core/http/scheduler-event.service';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort, SortDirection } from '@angular/material/sort';
-import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
-import { UtilsService } from '@core/services/utils.service';
+// import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
+// import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of, ReplaySubject } from 'rxjs';
+// import { emptyPageData, PageData } from '@shared/models/page/public-api';
+// import {
+//   catchError,
+//   debounceTime,
+//   distinctUntilChanged,
+//   map,
+//   publishReplay,
+//   refCount,
+//   share,
+//   skip,
+//   take,
+//   tap
+// } from 'rxjs/operators';
+import { PageLink, PageQueryParam } from '@shared/models/page/public-api';
+import { SchedulerEventService } from '@core/public-api';
+// import { MatPaginator } from '@angular/material/paginator';
+// import { MatSort, SortDirection } from '@angular/material/sort';
+// import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
+import { UtilsService } from '@core/public-api';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, isDefined, isEmptyStr, isNotEmptyStr, isNumber } from '@core/utils';
+// import { deepClone, isDefined, isEmptyStr, isNotEmptyStr, isNumber } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  SchedulerEventDialogComponent,
-  SchedulerEventDialogData
-} from '@home/components/scheduler/scheduler-event-dialog.component';
+// import {
+//   SchedulerEventDialogComponent,
+//   SchedulerEventDialogData
+// } from '@home/components/scheduler/scheduler-event-dialog.component';
 import {
   defaultSchedulerEventConfigTypes,
   SchedulerEventConfigType
 } from '@home/components/scheduler/scheduler-event-config.models';
-import { DialogService } from '@core/services/dialog.service';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import listPlugin from '@fullcalendar/list';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import momentPlugin, { toMoment } from '@fullcalendar/moment';
-import interactionPlugin from '@fullcalendar/interaction';
-import { FullCalendarComponent } from '@fullcalendar/angular';
-import {
-  schedulerCalendarView,
-  schedulerCalendarViewTranslationMap,
-  schedulerCalendarViewValueMap,
-  SchedulerEventsWidgetSettings
-} from '@home/components/scheduler/scheduler-events.models';
-import { Calendar, DateClickApi } from '@fullcalendar/core/Calendar';
-import { asRoughMs, Duration, EventInput, rangeContainsMarker } from '@fullcalendar/core';
-import { EventSourceError, EventSourceInput } from '@fullcalendar/core/structs/event-source';
-import * as _moment from 'moment';
-import { MatMenuTrigger } from '@angular/material/menu';
-import { EventHandlerArg } from '@fullcalendar/core/types/input-types';
-import { getUserZone } from '@shared/models/time/time.models';
-import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
-import {
-  AddEntitiesToEdgeDialogComponent,
-  AddEntitiesToEdgeDialogData
-} from '@home/dialogs/add-entities-to-edge-dialog.component';
-import { EntityType } from '@shared/models/entity-type.models';
-import { ResizeObserver } from '@juggle/resize-observer';
-import { hidePageSizePixelValue } from '@shared/models/constants';
-
-@Component({
-  selector: 'custom-scheduler-events',
-  templateUrl: './scheduler-events.component.html',
-  styleUrls: ['./scheduler-events.component.scss'],
-  encapsulation: ViewEncapsulation.None
-})
-export class SchedulerEventsComponent {
-  constructor() {
-  }
-}
-
-/*import {
-  AfterViewInit,
-  ChangeDetectorRef,
-  Component,
-  ElementRef,
-  Input,
-  OnChanges,
-  OnInit,
-  SimpleChanges,
-  ViewChild,
-  ViewEncapsulation
-} from '@angular/core';
-import { AuthUser, Direction, PageComponent } from '@shared/public-api';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { WidgetContext } from '@home/models/widget-component.models';
-import { UserPermissionsService } from '@core/public-api';
-import { Authority } from '@shared/public-api';
-import {
-  SchedulerEvent,
-  SchedulerEventWithCustomerInfo,
-  SchedulerRepeatType,
-  schedulerRepeatTypeToUnitMap,
-  schedulerTimeUnitRepeatTranslationMap,
-  schedulerWeekday
-} from '../../models/scheduler-event.models';
-import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
-import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of, ReplaySubject } from 'rxjs';
-import { emptyPageData, PageData } from '@shared/public-api';
-import {
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  publishReplay,
-  refCount,
-  share,
-  skip,
-  take,
-  tap
-} from 'rxjs/operators';
-import { PageLink, PageQueryParam } from '@shared/public-api';
-import { SchedulerEventService } from '@core/public-api';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort, SortDirection } from '@angular/material/sort';
-import { SortOrder, sortOrderFromString } from '@shared/public-api';
-import { UtilsService } from '@core/public-api';
-import { TranslateService } from '@ngx-translate/core';
-import { deepClone, isDefined, isEmptyStr, isNotEmptyStr, isNumber } from '@core/public-api';
-import { MatDialog } from '@angular/material/dialog';
-import {
-  SchedulerEventDialogComponent,   SchedulerEventDialogData
-} from '@home/components/scheduler/scheduler-event-dialog.component';
-import {
-  defaultSchedulerEventConfigTypes,
-  SchedulerEventConfigType
-} from './scheduler-event-config.models';
 import { DialogService } from '@core/public-api';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import momentPlugin, { toMoment } from '@fullcalendar/moment';
 import interactionPlugin from '@fullcalendar/interaction';
-import { FullCalendarComponent } from '@fullcalendar/angular';
+// import { FullCalendarComponent } from '@fullcalendar/angular';
 import {
   schedulerCalendarView,
   schedulerCalendarViewTranslationMap,
@@ -200,73 +101,262 @@ import {
   SchedulerEventsWidgetSettings
 } from './scheduler-events.models';
 import { Calendar, DateClickApi } from '@fullcalendar/core/Calendar';
-import { asRoughMs, Duration, EventInput, rangeContainsMarker } from '@fullcalendar/core';
+// import { asRoughMs, Duration, EventInput, rangeContainsMarker } from '@fullcalendar/core';
 import { EventSourceError, EventSourceInput } from '@fullcalendar/core/structs/event-source';
-import { MatMenuTrigger } from '@angular/material/menu';
-import { EventHandlerArg } from '@fullcalendar/core/types/input-types';
+// import * as _moment from 'moment';
+// import { MatMenuTrigger } from '@angular/material/menu';
+// import { EventHandlerArg } from '@fullcalendar/core/types/input-types';
+// import { getUserZone } from '@shared/models/time/time.models';
 import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
+// import {
+//   AddEntitiesToEdgeDialogComponent,
+//   AddEntitiesToEdgeDialogData
+// } from '@home/dialogs/add-entities-to-edge-dialog.component';
+import { EntityType } from '@shared/models/entity-type.models';
 import { ResizeObserver } from '@juggle/resize-observer';
+// import { hidePageSizePixelValue } from '@shared/models/constants';
+import { AuthUser } from '@shared/public-api';
 
-export enum Resource {
-  ALL = 'ALL',
-  PROFILE = 'PROFILE',
-  ADMIN_SETTINGS = 'ADMIN_SETTINGS',
-  ALARM = 'ALARM',
-  DEVICE = 'DEVICE',
-  DEVICE_PROFILE = 'DEVICE_PROFILE',
-  ASSET = 'ASSET',
-  CUSTOMER = 'CUSTOMER',
-  DASHBOARD = 'DASHBOARD',
-  ENTITY_VIEW = 'ENTITY_VIEW',
-  TENANT = 'TENANT',
-  TENANT_PROFILE = 'TENANT_PROFILE',
-  RULE_CHAIN = 'RULE_CHAIN',
-  USER = 'USER',
-  WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
-  WIDGET_TYPE = 'WIDGET_TYPE',
-  CONVERTER = 'CONVERTER',
-  INTEGRATION = 'INTEGRATION',
-  SCHEDULER_EVENT = 'SCHEDULER_EVENT',
-  BLOB_ENTITY = 'BLOB_ENTITY',
-  CUSTOMER_GROUP = 'CUSTOMER_GROUP',
-  DEVICE_GROUP = 'DEVICE_GROUP',
-  ASSET_GROUP = 'ASSET_GROUP',
-  USER_GROUP = 'USER_GROUP',
-  ENTITY_VIEW_GROUP = 'ENTITY_VIEW_GROUP',
-  DASHBOARD_GROUP = 'DASHBOARD_GROUP',
-  ROLE = 'ROLE',
-  GROUP_PERMISSION = 'GROUP_PERMISSION',
-  WHITE_LABELING = 'WHITE_LABELING',
-  AUDIT_LOG = 'AUDIT_LOG',
-  API_USAGE_STATE = 'API_USAGE_STATE',
-  TB_RESOURCE = 'TB_RESOURCE',
-  EDGE = 'EDGE',
-  EDGE_GROUP = 'EDGE_GROUP',
-  OTA_PACKAGE = 'OTA_PACKAGE'
+@Component({
+  selector: 'custom-scheduler-events',
+  templateUrl: './scheduler-events.component.html',
+  styleUrls: ['./scheduler-events.component.scss']
+})
+export class SchedulerEventsComponent extends PageComponent implements OnInit {
+
+  /*@ViewChild('schedulerEventWidgetContainer', {static: true}) schedulerEventWidgetContainerRef: ElementRef;
+  @ViewChild('searchInput') searchInputField: ElementRef;
+
+  @ViewChild(MatPaginator) paginator: MatPaginator;
+  @ViewChild(MatSort) sort: MatSort;
+
+  @ViewChild('calendarContainer') calendarContainer: ElementRef<HTMLElement>;
+  @ViewChild('calendar') calendarComponent: FullCalendarComponent;
+
+  @ViewChild('schedulerEventMenuTrigger', {static: true}) schedulerEventMenuTrigger: MatMenuTrigger;
+*/
+
+  @Input()
+  widgetMode: boolean;
+
+  @Input()
+  ctx: WidgetContext;
+
+  settings: SchedulerEventsWidgetSettings;
+
+  editEnabled = true;
+  addEnabled = true;
+  deleteEnabled = true;
+
+  authUser: AuthUser;
+
+  showData = true;
+
+  mode = 'list';
+
+  displayCreatedTime = true;
+  displayType = true;
+  displayCustomer = true;
+
+  schedulerEventConfigTypes: {[eventType: string]: SchedulerEventConfigType};
+
+  displayPagination = true;
+  pageSizeOptions;
+  defaultPageSize = 10;
+  defaultSortOrder = 'createdTime';
+  defaultEventType: string;
+  hidePageSize = false;
+  noDataDisplayMessageText: string;
+
+  displayedColumns: string[];
+  pageLink: PageLink;
+
+  textSearchMode = false;
+
+  assignEnabled = false;
+
+  // dataSource: SchedulerEventsDatasource;
+
+  calendarPlugins = [interactionPlugin, momentPlugin, dayGridPlugin, listPlugin, timeGridPlugin];
+
+  currentCalendarView = schedulerCalendarView.month;
+
+  currentCalendarViewValue = schedulerCalendarViewValueMap.get(this.currentCalendarView);
+
+  schedulerCalendarViews = Object.keys(schedulerCalendarView);
+  schedulerCalendarViewTranslations = schedulerCalendarViewTranslationMap;
+
+  // eventSources: EventSourceInput[] = [this.eventSourceFunction.bind(this)];
+
+  calendarApi: Calendar;
+
+  schedulerEventMenuPosition = { x: '0px', y: '0px' };
+
+  schedulerContextMenuEvent: MouseEvent;
+
+  private schedulerEvents: Array<SchedulerEventWithCustomerInfo> = [];
+
+  private widgetResize$: ResizeObserver;
+
+  constructor(protected store: Store<AppState>,
+              private utils: UtilsService,
+              public translate: TranslateService,
+              private schedulerEventService: SchedulerEventService,
+              private userPermissionsService: UserPermissionsService,
+              private dialogService: DialogService,
+              private dialog: MatDialog,
+              private router: Router,
+              private route: ActivatedRoute,
+              private cd: ChangeDetectorRef) {
+    super(store);
+    console.log('store', store);
+  }
+
+  ngOnInit(): void {
+    if (this.widgetMode) {
+      this.ctx.$scope.schedulerEventsWidget = this;
+    }
+
+  }
 }
 
-export enum Operation {
-  ALL = 'ALL',
-  CREATE = 'CREATE',
-  READ = 'READ',
-  WRITE = 'WRITE',
-  DELETE = 'DELETE',
-  RPC_CALL = 'RPC_CALL',
-  READ_CREDENTIALS = 'READ_CREDENTIALS',
-  WRITE_CREDENTIALS = 'WRITE_CREDENTIALS',
-  READ_ATTRIBUTES = 'READ_ATTRIBUTES',
-  WRITE_ATTRIBUTES = 'WRITE_ATTRIBUTES',
-  READ_TELEMETRY = 'READ_TELEMETRY',
-  WRITE_TELEMETRY = 'WRITE_TELEMETRY',
-  ADD_TO_GROUP = 'ADD_TO_GROUP',
-  REMOVE_FROM_GROUP = 'REMOVE_FROM_GROUP',
-  CHANGE_OWNER = 'CHANGE_OWNER',
-  IMPERSONATE = 'IMPERSONATE',
-  CLAIM_DEVICES = 'CLAIM_DEVICES',
-  SHARE_GROUP = 'SHARE_GROUP',
-  ASSIGN_TO_TENANT = 'ASSIGN_TO_TENANT'
-}
+/*class SchedulerEventsDatasource implements DataSource<SchedulerEventWithCustomerInfo> {
 
+  private entitiesSubject = new BehaviorSubject<SchedulerEventWithCustomerInfo[]>([]);
+  private pageDataSubject = new BehaviorSubject<PageData<SchedulerEventWithCustomerInfo>>(emptyPageData<SchedulerEventWithCustomerInfo>());
+
+  public pageData$ = this.pageDataSubject.asObservable();
+
+  public selection = new SelectionModel<SchedulerEventWithCustomerInfo>(true, []);
+
+  private allEntities: Observable<Array<SchedulerEventWithCustomerInfo>>;
+
+  public dataLoading = true;
+
+  public edgeId: string;
+
+  constructor(private schedulerEventService: SchedulerEventService,
+              private schedulerEventConfigTypes: {[eventType: string]: SchedulerEventConfigType},
+              private route: ActivatedRoute) {
+  }
+
+  connect(collectionViewer: CollectionViewer):
+    Observable<SchedulerEventWithCustomerInfo[] | ReadonlyArray<SchedulerEventWithCustomerInfo>> {
+    return this.entitiesSubject.asObservable();
+  }
+
+  disconnect(collectionViewer: CollectionViewer): void {
+    this.entitiesSubject.complete();
+    this.pageDataSubject.complete();
+  }
+
+  reset() {
+    const pageData = emptyPageData<SchedulerEventWithCustomerInfo>();
+    this.entitiesSubject.next(pageData.data);
+    this.pageDataSubject.next(pageData);
+  }
+
+  loadEntities(pageLink: PageLink, eventType: string,
+               reload: boolean = false): Observable<PageData<SchedulerEventWithCustomerInfo>> {
+    this.dataLoading = true;
+    if (reload) {
+      this.allEntities = null;
+    }
+    const result = new ReplaySubject<PageData<SchedulerEventWithCustomerInfo>>();
+    this.fetchEntities(eventType, pageLink).pipe(
+      tap(() => {
+        this.selection.clear();
+      }),
+      catchError(() => of([
+        emptyPageData<SchedulerEventWithCustomerInfo>(),
+        emptyPageData<SchedulerEventWithCustomerInfo>()
+      ])),
+    ).subscribe(
+      (pageData) => {
+        this.entitiesSubject.next(pageData[0].data);
+        this.pageDataSubject.next(pageData[0]);
+        result.next(pageData[1]);
+        this.dataLoading = false;
+      }
+    );
+    return result;
+  }
+
+  fetchEntities(eventType: string,
+                pageLink: PageLink): Observable<Array<PageData<SchedulerEventWithCustomerInfo>>> {
+    const allPageLinkData = new PageLink(Number.POSITIVE_INFINITY, 0, pageLink.textSearch);
+    return this.getAllEntities(eventType).pipe(
+      map((data) => allPageLinkData.filterData(data)),
+      map((data) => [pageLink.filterData(data.data), data])
+    );
+  }
+
+  getAllEntities(eventType: string): Observable<Array<SchedulerEventWithCustomerInfo>> {
+    if (!this.allEntities) {
+      let fetchObservable: Observable<Array<SchedulerEventWithCustomerInfo>>;
+      if (this.edgeId) {
+        fetchObservable = this.schedulerEventService.getEdgeSchedulerEvents(this.edgeId);
+      } else {
+        fetchObservable = this.schedulerEventService.getSchedulerEvents(eventType);
+      }
+      this.allEntities = fetchObservable.pipe(
+        map((schedulerEvents) => {
+          schedulerEvents.forEach((schedulerEvent) => {
+            let typeName = schedulerEvent.type;
+            if (this.schedulerEventConfigTypes[typeName]) {
+              typeName = this.schedulerEventConfigTypes[typeName].name;
+            }
+            schedulerEvent.typeName = typeName;
+          });
+          return schedulerEvents;
+        }),
+        publishReplay(1),
+        refCount()
+      );
+    }
+    return this.allEntities;
+  }
+
+  isAllSelected(): Observable<boolean> {
+    const numSelected = this.selection.selected.length;
+    return this.entitiesSubject.pipe(
+      map((entities) => numSelected === entities.length),
+      share()
+    );
+  }
+
+  isEmpty(): Observable<boolean> {
+    return this.entitiesSubject.pipe(
+      map((entities) => !entities.length),
+      share()
+    );
+  }
+
+  total(): Observable<number> {
+    return this.pageDataSubject.pipe(
+      map((pageData) => pageData.totalElements),
+      share()
+    );
+  }
+
+  masterToggle() {
+    this.entitiesSubject.pipe(
+      tap((entities) => {
+        const numSelected = this.selection.selected.length;
+        if (numSelected === entities.length) {
+          this.selection.clear();
+        } else {
+          entities.forEach(row => {
+            this.selection.select(row);
+          });
+        }
+      }),
+      take(1)
+    ).subscribe();
+  }
+}*/
+
+/*
 @Component({
   selector: 'custom-scheduler-events',
   templateUrl: './scheduler-events.component.html',

@@ -11,13 +11,11 @@ import { SharedModule } from '@shared/public-api';
 import { HomeComponentsModule } from '@home/components/public-api';
 import { ExampleMap } from './components/map/example-map.component';
 import { CustomAlarmsTableWidgetComponent } from './components/alarm/custom-alarms-table-widget.component';
-import { SchedulerEventsComponent } from './components/custom-scheduler-events/scheduler-events.component';
 
 @NgModule({
   declarations: [
     ExampleMap,
-    CustomAlarmsTableWidgetComponent,
-    SchedulerEventsComponent
+    CustomAlarmsTableWidgetComponent
   ],
   imports: [
     CommonModule,
@@ -27,8 +25,7 @@ import { SchedulerEventsComponent } from './components/custom-scheduler-events/s
   exports: [
     ExampleMap,
     ExampleModule,
-    CustomAlarmsTableWidgetComponent,
-    SchedulerEventsComponent
+    CustomAlarmsTableWidgetComponent
   ]
 })
 export class ThingsboardExtensionWidgetsModule {
