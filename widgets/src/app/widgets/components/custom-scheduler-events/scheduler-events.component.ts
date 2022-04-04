@@ -298,7 +298,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit {
         this.pageLink.textSearch = decodeURI(routerQueryParams.textSearch);
       }
       this.schedulerEventConfigTypes = deepClone(defaultSchedulerEventConfigTypes);
-      // this.dataSource = new SchedulerEventsDatasource(this.schedulerEventService, this.schedulerEventConfigTypes, this.route);
+      this.dataSource = new SchedulerEventsDatasource(this.schedulerEventService, this.schedulerEventConfigTypes, this.route);
     }
     if (this.displayPagination) {
       this.widgetResize$ = new ResizeObserver(() => {
@@ -397,16 +397,16 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit {
         }
       }
     ];
-    // this.dataSource = new SchedulerEventsDatasource(this.schedulerEventService, this.schedulerEventConfigTypes, this.route);
-    // this.dataSource.selection.changed.subscribe(() => {
-    //   const hideTitlePanel = !this.dataSource.selection.isEmpty() || this.textSearchMode;
-    //   if (this.ctx.hideTitlePanel !== hideTitlePanel) {
-    //     this.ctx.hideTitlePanel = hideTitlePanel;
-    //     this.ctx.detectChanges(true);
-    //   } else {
-    //     this.ctx.detectChanges();
-    //   }
-    // });
+    this.dataSource = new SchedulerEventsDatasource(this.schedulerEventService, this.schedulerEventConfigTypes, this.route);
+    this.dataSource.selection.changed.subscribe(() => {
+      const hideTitlePanel = !this.dataSource.selection.isEmpty() || this.textSearchMode;
+      if (this.ctx.hideTitlePanel !== hideTitlePanel) {
+        this.ctx.hideTitlePanel = hideTitlePanel;
+        this.ctx.detectChanges(true);
+      } else {
+        this.ctx.detectChanges();
+      }
+    });
   }
 }
 
