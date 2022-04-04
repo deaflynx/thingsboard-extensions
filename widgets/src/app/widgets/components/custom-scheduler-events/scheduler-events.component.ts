@@ -46,7 +46,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UserPermissionsService } from '@core/public-api';
-import { Authority } from '@shared/models/authority.enum';
+import { Authority } from '@shared/public-api';
 import {
   SchedulerEvent,
   SchedulerEventWithCustomerInfo,
@@ -54,10 +54,10 @@ import {
   schedulerRepeatTypeToUnitMap,
   schedulerTimeUnitRepeatTranslationMap,
   schedulerWeekday
-} from '@shared/models/scheduler-event.models';
+} from './scheduler-event.models';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
 import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of, ReplaySubject } from 'rxjs';
-import { emptyPageData, PageData } from '@shared/models/page/public-api';
+import { emptyPageData, PageData } from '@shared/public-api';
 import {
   catchError,
   debounceTime,
@@ -114,6 +114,65 @@ import { hidePageSizePixelValue } from '@shared/public-api';
 import { AuthUser } from '@shared/public-api';
 import { defaultSchedulerEventConfigTypes, SchedulerEventConfigType } from './scheduler-event-config.models';
 
+export enum Resource {
+  ALL = "ALL",
+  PROFILE = "PROFILE",
+  ADMIN_SETTINGS = "ADMIN_SETTINGS",
+  ALARM = "ALARM",
+  DEVICE = "DEVICE",
+  DEVICE_PROFILE = "DEVICE_PROFILE",
+  ASSET = "ASSET",
+  CUSTOMER = "CUSTOMER",
+  DASHBOARD = "DASHBOARD",
+  ENTITY_VIEW = "ENTITY_VIEW",
+  TENANT = "TENANT",
+  TENANT_PROFILE = "TENANT_PROFILE",
+  RULE_CHAIN = "RULE_CHAIN",
+  USER = "USER",
+  WIDGETS_BUNDLE = "WIDGETS_BUNDLE",
+  WIDGET_TYPE = "WIDGET_TYPE",
+  CONVERTER = "CONVERTER",
+  INTEGRATION = "INTEGRATION",
+  SCHEDULER_EVENT = "SCHEDULER_EVENT",
+  BLOB_ENTITY = "BLOB_ENTITY",
+  CUSTOMER_GROUP = "CUSTOMER_GROUP",
+  DEVICE_GROUP = "DEVICE_GROUP",
+  ASSET_GROUP = "ASSET_GROUP",
+  USER_GROUP = "USER_GROUP",
+  ENTITY_VIEW_GROUP = "ENTITY_VIEW_GROUP",
+  DASHBOARD_GROUP = "DASHBOARD_GROUP",
+  ROLE = "ROLE",
+  GROUP_PERMISSION = "GROUP_PERMISSION",
+  WHITE_LABELING = "WHITE_LABELING",
+  AUDIT_LOG = "AUDIT_LOG",
+  API_USAGE_STATE = "API_USAGE_STATE",
+  TB_RESOURCE = "TB_RESOURCE",
+  EDGE = "EDGE",
+  EDGE_GROUP = "EDGE_GROUP",
+  OTA_PACKAGE = "OTA_PACKAGE"
+}
+export enum Operation {
+  ALL = "ALL",
+  CREATE = "CREATE",
+  READ = "READ",
+  WRITE = "WRITE",
+  DELETE = "DELETE",
+  RPC_CALL = "RPC_CALL",
+  READ_CREDENTIALS = "READ_CREDENTIALS",
+  WRITE_CREDENTIALS = "WRITE_CREDENTIALS",
+  READ_ATTRIBUTES = "READ_ATTRIBUTES",
+  WRITE_ATTRIBUTES = "WRITE_ATTRIBUTES",
+  READ_TELEMETRY = "READ_TELEMETRY",
+  WRITE_TELEMETRY = "WRITE_TELEMETRY",
+  ADD_TO_GROUP = "ADD_TO_GROUP",
+  REMOVE_FROM_GROUP = "REMOVE_FROM_GROUP",
+  CHANGE_OWNER = "CHANGE_OWNER",
+  IMPERSONATE = "IMPERSONATE",
+  CLAIM_DEVICES = "CLAIM_DEVICES",
+  SHARE_GROUP = "SHARE_GROUP",
+  ASSIGN_TO_TENANT = "ASSIGN_TO_TENANT"
+}
+
 @Component({
   selector: 'custom-scheduler-events',
   templateUrl: './scheduler-events.component.html',
@@ -140,9 +199,9 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit {
 
   settings: SchedulerEventsWidgetSettings;
 
-  editEnabled = true;
-  addEnabled = true;
-  deleteEnabled = true;
+  editEnabled = this.userPermissionsService.hasGenericPermission(Resource.SCHEDULER_EVENT, Operation.WRITE);
+  addEnabled = this.userPermissionsService.hasGenericPermission(Resource.SCHEDULER_EVENT, Operation.CREATE);
+  deleteEnabled = this.userPermissionsService.hasGenericPermission(Resource.SCHEDULER_EVENT, Operation.DELETE);
 
   authUser: AuthUser;
 
@@ -171,7 +230,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit {
 
   assignEnabled = false;
 
-  // dataSource: SchedulerEventsDatasource;
+  dataSource: SchedulerEventsDatasource;
 
   calendarPlugins = [interactionPlugin, momentPlugin, dayGridPlugin, listPlugin, timeGridPlugin];
 
@@ -338,20 +397,20 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit {
         }
       }
     ];
-    /*this.dataSource = new SchedulerEventsDatasource(this.schedulerEventService, this.schedulerEventConfigTypes, this.route);
-    this.dataSource.selection.changed.subscribe(() => {
-      const hideTitlePanel = !this.dataSource.selection.isEmpty() || this.textSearchMode;
-      if (this.ctx.hideTitlePanel !== hideTitlePanel) {
-        this.ctx.hideTitlePanel = hideTitlePanel;
-        this.ctx.detectChanges(true);
-      } else {
-        this.ctx.detectChanges();
-      }
-    });*/
+    // this.dataSource = new SchedulerEventsDatasource(this.schedulerEventService, this.schedulerEventConfigTypes, this.route);
+    // this.dataSource.selection.changed.subscribe(() => {
+    //   const hideTitlePanel = !this.dataSource.selection.isEmpty() || this.textSearchMode;
+    //   if (this.ctx.hideTitlePanel !== hideTitlePanel) {
+    //     this.ctx.hideTitlePanel = hideTitlePanel;
+    //     this.ctx.detectChanges(true);
+    //   } else {
+    //     this.ctx.detectChanges();
+    //   }
+    // });
   }
 }
 
-/*class SchedulerEventsDatasource implements DataSource<SchedulerEventWithCustomerInfo> {
+class SchedulerEventsDatasource implements DataSource<SchedulerEventWithCustomerInfo> {
 
   private entitiesSubject = new BehaviorSubject<SchedulerEventWithCustomerInfo[]>([]);
   private pageDataSubject = new BehaviorSubject<PageData<SchedulerEventWithCustomerInfo>>(emptyPageData<SchedulerEventWithCustomerInfo>());
@@ -485,7 +544,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit {
       take(1)
     ).subscribe();
   }
-}*/
+}
 
 // /!*
 //  * Copyright Â© 2020 ThingsBoard
