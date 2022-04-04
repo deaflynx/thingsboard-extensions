@@ -423,8 +423,6 @@ class SchedulerEventsDatasource implements DataSource<SchedulerEventWithCustomer
 
   public dataLoading = true;
 
-  public edgeId: string;
-
   constructor(private schedulerEventService: SchedulerEventService,
               private schedulerEventConfigTypes: {[eventType: string]: SchedulerEventConfigType},
               private route: ActivatedRoute) {
@@ -483,12 +481,7 @@ class SchedulerEventsDatasource implements DataSource<SchedulerEventWithCustomer
 
   getAllEntities(eventType: string): Observable<Array<SchedulerEventWithCustomerInfo>> {
     if (!this.allEntities) {
-      let fetchObservable: Observable<Array<SchedulerEventWithCustomerInfo>>;
-      if (this.edgeId) {
-        fetchObservable = this.schedulerEventService.getEdgeSchedulerEvents(this.edgeId);
-      } else {
-        fetchObservable = this.schedulerEventService.getSchedulerEvents(eventType);
-      }
+      let fetchObservable: Observable<Array<SchedulerEventWithCustomerInfo>> = this.schedulerEventService.getSchedulerEvents(eventType);
       this.allEntities = fetchObservable.pipe(
         map((schedulerEvents) => {
           schedulerEvents.forEach((schedulerEvent) => {
