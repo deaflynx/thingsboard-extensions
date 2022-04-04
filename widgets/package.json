@@ -65,6 +65,8 @@
     "@juggle/resize-observer": "^3.3.1",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.34",
-    "@types/node": "~15.14.9"
+    "@types/node": "^15.14.9",
+    "@types/tooltipster": "^0.0.31",
+    "tooltipster": "^4.2.8"
   }
 }
