@@ -206,6 +206,8 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
 
   mode = 'list';
 
+  isListMode = () => this.mode === 'list';
+
   displayCreatedTime = true;
   displayType = true;
   displayCustomer = true;
@@ -497,7 +499,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
         show: this.addEnabled,
         icon: 'add',
         onAction: ($event) => {
-          // this.addSchedulerEvent($event);
+          this.addSchedulerEvent($event);
         }
       },
       {
@@ -505,7 +507,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
         show: true,
         icon: 'search',
         onAction: () => {
-          // this.enterFilterMode();
+          this.enterFilterMode();
         }
       },
       {
@@ -513,7 +515,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
         show: true,
         icon: 'refresh',
         onAction: () => {
-          // this.reloadSchedulerEvents();
+          this.reloadSchedulerEvents();
         }
       }
     ];
@@ -827,8 +829,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
   updateCalendarEvents(schedulerEvents: Array<SchedulerEventWithCustomerInfo>) {
     this.schedulerEvents = schedulerEvents;
     if (this.calendarApi) {
-      console.log('this.calendarApi', this.calendarApi)
-      // this.calendarApi.refetchEvents();
+      this.calendarApi.refetchEvents();
     }
   }
 
@@ -846,12 +847,12 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
       const rangeEnd = end.local();
       this.schedulerEvents.forEach((event) => {
         const startOffset = userZone.utcOffset(event.schedule.startTime) * 60 * 1000;
-        const eventStart = _moment(event.schedule.startTime - startOffset);
+        const eventStart = window.moment(event.schedule.startTime - startOffset);
         let calendarEvent: EventInput;
         if (rangeEnd.isSameOrAfter(eventStart)) {
           if (event.schedule.repeat) {
             const endOffset = userZone.utcOffset(event.schedule.repeat.endsOn) * 60 * 1000;
-            const repeatEndsOn = _moment(event.schedule.repeat.endsOn - endOffset);
+            const repeatEndsOn = window.moment(event.schedule.repeat.endsOn - endOffset);
             if (event.schedule.repeat.type === SchedulerRepeatType.TIMER) {
               calendarEvent = this.toCalendarEvent(event,
                 eventStart,
@@ -866,7 +867,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
                 switch (event.schedule.repeat.type) {
                   case SchedulerRepeatType.YEARLY:
                   case SchedulerRepeatType.MONTHLY:
-                    const eventStartOffsetDuration = _moment.duration(rangeStart.diff(eventStart));
+                    const eventStartOffsetDuration = window.moment.duration(rangeStart.diff(eventStart));
                     const offsetUnits = schedulerRepeatTypeToUnitMap.get(event.schedule.repeat.type);
                     eventStartOffsetUnits =
                       Math.ceil(eventStartOffsetDuration.as(offsetUnits));
@@ -942,13 +943,13 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
     let info = '';
     const startTime = event.schedule.startTime;
     if (!event.schedule.repeat) {
-      const start = _moment.utc(startTime).local().format('MMM DD, YYYY, hh:mma');
+      const start = window.moment.utc(startTime).local().format('MMM DD, YYYY, hh:mma');
       info += start;
       return info;
     } else {
-      info += _moment.utc(startTime).local().format('hh:mma');
+      info += window.moment.utc(startTime).local().format('hh:mma');
       info += '<br/>';
-      info += this.translate.instant('scheduler.starting-from') + ' ' + _moment.utc(startTime).local().format('MMM DD, YYYY') + ', ';
+      info += this.translate.instant('scheduler.starting-from') + ' ' + window.moment.utc(startTime).local().format('MMM DD, YYYY') + ', ';
       if (event.schedule.repeat.type === SchedulerRepeatType.DAILY) {
         info += this.translate.instant('scheduler.daily') + ', ';
       } else if (event.schedule.repeat.type === SchedulerRepeatType.MONTHLY) {
@@ -966,7 +967,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
         });
       }
       info += this.translate.instant('scheduler.until') + ' ';
-      info += _moment.utc(event.schedule.repeat.endsOn).local().format('MMM DD, YYYY');
+      info += window.moment.utc(event.schedule.repeat.endsOn).local().format('MMM DD, YYYY');
       return info;
     }
   }
