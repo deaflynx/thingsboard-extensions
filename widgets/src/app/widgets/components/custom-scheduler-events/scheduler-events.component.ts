@@ -1,34 +1,3 @@
-///
-/// ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
-///
-/// Copyright © 2016-2022 ThingsBoard, Inc. All Rights Reserved.
-///
-/// NOTICE: All information contained herein is, and remains
-/// the property of ThingsBoard, Inc. and its suppliers,
-/// if any.  The intellectual and technical concepts contained
-/// herein are proprietary to ThingsBoard, Inc.
-/// and its suppliers and may be covered by U.S. and Foreign Patents,
-/// patents in process, and are protected by trade secret or copyright law.
-///
-/// Dissemination of this information or reproduction of this material is strictly forbidden
-/// unless prior written permission is obtained from COMPANY.
-///
-/// Access to the source code contained herein is hereby forbidden to anyone except current COMPANY employees,
-/// managers or contractors who have executed Confidentiality and Non-disclosure agreements
-/// explicitly covering such access.
-///
-/// The copyright notice above does not evidence any actual or intended publication
-/// or disclosure  of  this source code, which includes
-/// information that is confidential and/or proprietary, and is a trade secret, of  COMPANY.
-/// ANY REPRODUCTION, MODIFICATION, DISTRIBUTION, PUBLIC  PERFORMANCE,
-/// OR PUBLIC DISPLAY OF OR THROUGH USE  OF THIS  SOURCE CODE  WITHOUT
-/// THE EXPRESS WRITTEN CONSENT OF COMPANY IS STRICTLY PROHIBITED,
-/// AND IN VIOLATION OF APPLICABLE LAWS AND INTERNATIONAL TREATIES.
-/// THE RECEIPT OR POSSESSION OF THIS SOURCE CODE AND/OR RELATED INFORMATION
-/// DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
-/// OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
-///
-
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -66,7 +35,7 @@ import {
   UserService,
   UtilsService
 } from '@core/public-api';
-import { WidgetContext } from '@home/models/widget-component.models';
+import { WidgetContext } from '../../models/widget-component.models';
 import {
   SchedulerEvent,
   SchedulerEventWithCustomerInfo,
@@ -93,10 +62,8 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  SchedulerEventDialogComponent,
-  SchedulerEventDialogData
-} from '@home/components/scheduler/scheduler-event-dialog.component';
+import { SchedulerEventDialogComponent } from './scheduler-event-dialog.component';
+import { SchedulerEventDialogData } from './scheduler-event-dialog.component';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -120,63 +87,15 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import { defaultSchedulerEventConfigTypes, SchedulerEventConfigType } from './scheduler-event-config.models';
 import { getCurrentAuthUser } from '../../models/auth.selectors';
 
-export enum Resource {
-  ALL = "ALL",
-  PROFILE = "PROFILE",
-  ADMIN_SETTINGS = "ADMIN_SETTINGS",
-  ALARM = "ALARM",
-  DEVICE = "DEVICE",
-  DEVICE_PROFILE = "DEVICE_PROFILE",
-  ASSET = "ASSET",
+enum Resource {
   CUSTOMER = "CUSTOMER",
-  DASHBOARD = "DASHBOARD",
-  ENTITY_VIEW = "ENTITY_VIEW",
-  TENANT = "TENANT",
-  TENANT_PROFILE = "TENANT_PROFILE",
-  RULE_CHAIN = "RULE_CHAIN",
-  USER = "USER",
-  WIDGETS_BUNDLE = "WIDGETS_BUNDLE",
-  WIDGET_TYPE = "WIDGET_TYPE",
-  CONVERTER = "CONVERTER",
-  INTEGRATION = "INTEGRATION",
-  SCHEDULER_EVENT = "SCHEDULER_EVENT",
-  BLOB_ENTITY = "BLOB_ENTITY",
-  CUSTOMER_GROUP = "CUSTOMER_GROUP",
-  DEVICE_GROUP = "DEVICE_GROUP",
-  ASSET_GROUP = "ASSET_GROUP",
-  USER_GROUP = "USER_GROUP",
-  ENTITY_VIEW_GROUP = "ENTITY_VIEW_GROUP",
-  DASHBOARD_GROUP = "DASHBOARD_GROUP",
-  ROLE = "ROLE",
-  GROUP_PERMISSION = "GROUP_PERMISSION",
-  WHITE_LABELING = "WHITE_LABELING",
-  AUDIT_LOG = "AUDIT_LOG",
-  API_USAGE_STATE = "API_USAGE_STATE",
-  TB_RESOURCE = "TB_RESOURCE",
-  EDGE = "EDGE",
-  EDGE_GROUP = "EDGE_GROUP",
-  OTA_PACKAGE = "OTA_PACKAGE"
+  SCHEDULER_EVENT = "SCHEDULER_EVENT"
 }
-export enum Operation {
-  ALL = "ALL",
+enum Operation {
   CREATE = "CREATE",
   READ = "READ",
   WRITE = "WRITE",
-  DELETE = "DELETE",
-  RPC_CALL = "RPC_CALL",
-  READ_CREDENTIALS = "READ_CREDENTIALS",
-  WRITE_CREDENTIALS = "WRITE_CREDENTIALS",
-  READ_ATTRIBUTES = "READ_ATTRIBUTES",
-  WRITE_ATTRIBUTES = "WRITE_ATTRIBUTES",
-  READ_TELEMETRY = "READ_TELEMETRY",
-  WRITE_TELEMETRY = "WRITE_TELEMETRY",
-  ADD_TO_GROUP = "ADD_TO_GROUP",
-  REMOVE_FROM_GROUP = "REMOVE_FROM_GROUP",
-  CHANGE_OWNER = "CHANGE_OWNER",
-  IMPERSONATE = "IMPERSONATE",
-  CLAIM_DEVICES = "CLAIM_DEVICES",
-  SHARE_GROUP = "SHARE_GROUP",
-  ASSIGN_TO_TENANT = "ASSIGN_TO_TENANT"
+  DELETE = "DELETE"
 }
 
 @Component({
@@ -216,7 +135,6 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
 
   mode = 'list';
   isListMode = () => this.mode === 'list';
-
   displayCreatedTime = true;
   displayType = true;
   displayCustomer = true;
@@ -445,7 +363,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
   }
 
   private initializeWidgetConfig() {
-    this.ctx.widgetConfig.showTitle = false;
+    // this.ctx.widgetConfig.showTitle = false;
     this.ctx.widgetTitle = this.settings.title;
     const displayCreatedTime = isDefined(this.settings.displayCreatedTime) ? this.settings.displayCreatedTime : true;
     const displayType = isDefined(this.settings.displayType) ? this.settings.displayType : true;
@@ -673,7 +591,8 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
         isAdd,
         readonly,
         schedulerEvent,
-        defaultEventType: this.defaultEventType
+        defaultEventType: this.defaultEventType,
+        ctx: this.ctx
       }
     }).afterClosed().subscribe(
       (res) => {
