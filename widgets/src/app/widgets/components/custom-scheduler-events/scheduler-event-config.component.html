@@ -1,0 +1,34 @@
+<section [fxShow]="schedulerEventType" [formGroup]="schedulerEventConfigFormGroup" class="tb-scheduler-event" fxLayout="column">
+  <div *ngIf="showOriginator">
+    <small translate>scheduler.originator</small>
+    <tb-originator-select
+      formControlName="originatorId">
+    </tb-originator-select>
+  </div>
+  <tb-message-type-autocomplete
+    *ngIf="showMsgType"
+    formControlName="msgType"
+  ></tb-message-type-autocomplete>
+  <tb-json-object-edit
+    class="tb-scheduler-event-configuration-json"
+    *ngIf="!useDefinedTemplate"
+    formControlName="msgBody"
+    label="{{ 'scheduler.message-body' | translate }}"
+    required
+    [fillHeight]="true">
+  </tb-json-object-edit>
+  <div *ngIf="showMetadata">
+    <div style="height: 24px;"></div>
+    <mat-expansion-panel [expanded]="false">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div class="tb-panel-title" translate>rulenode.metadata</div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <tb-key-val-map
+        formControlName="metadata"
+        titleText="rulenode.metadata"
+      ></tb-key-val-map>
+    </mat-expansion-panel>
+  </div>
+</section>

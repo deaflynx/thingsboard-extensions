@@ -175,6 +175,8 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
 
   schedulerContextMenuEvent: MouseEvent;
 
+  configTypes: any = {};
+
   private schedulerEvents: Array<SchedulerEventWithCustomerInfo> = [];
 
   private widgetResize$: ResizeObserver;
@@ -363,7 +365,6 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
   }
 
   private initializeWidgetConfig() {
-    // this.ctx.widgetConfig.showTitle = false;
     this.ctx.widgetTitle = this.settings.title;
     const displayCreatedTime = isDefined(this.settings.displayCreatedTime) ? this.settings.displayCreatedTime : true;
     const displayType = isDefined(this.settings.displayType) ? this.settings.displayType : true;
@@ -415,7 +416,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
     this.schedulerEventConfigTypes = deepClone(defaultSchedulerEventConfigTypes);
     if (this.settings.customEventTypes && this.settings.customEventTypes.length) {
       this.settings.customEventTypes.forEach((customEventType) => {
-        this.schedulerEventConfigTypes[customEventType.value] = customEventType;
+        this.configTypes[customEventType.value] = customEventType;
       });
     }
     if (this.settings.enabledViews !== 'both') {
@@ -587,7 +588,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        schedulerEventConfigTypes: this.schedulerEventConfigTypes,
+        schedulerEventConfigTypes: this.configTypes ? this.configTypes : this.schedulerEventConfigTypes,
         isAdd,
         readonly,
         schedulerEvent,

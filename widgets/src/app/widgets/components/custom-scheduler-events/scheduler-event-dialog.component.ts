@@ -59,7 +59,6 @@ export class SchedulerEventDialogComponent extends DialogComponent<SchedulerEven
     this.schedulerEvent = data.schedulerEvent;
     this.defaultEventType = data.defaultEventType;
     this.ctx = data.ctx;
-    console.log(this.ctx);
   }
 
   ngOnInit(): void {
@@ -103,8 +102,11 @@ export class SchedulerEventDialogComponent extends DialogComponent<SchedulerEven
     if (!this.schedulerEventFormGroup.invalid) {
       this.schedulerEvent = {...this.schedulerEvent, ...this.schedulerEventFormGroup.getRawValue()};
       this.schedulerEvent.name = this.schedulerEvent.type;
-      if (this.ctx.datasources[0].entityId) {
-        this.entityRelationService.findByFrom({id: this.ctx.datasources[0].entityId, entityType: this.ctx.datasources[0].entityType}).pipe(
+      if (this.ctx.datasources && this.ctx.datasources[0].entityId) {
+        this.entityRelationService.findByFrom({
+          id: this.ctx.datasources[0].entityId,
+          entityType: this.ctx.datasources[0].entityType
+        }).pipe(
           // @ts-ignore
           mergeMap((relations) => {
             if (!relations.length || !relations[0] || !relations[0].to) {
@@ -114,32 +116,28 @@ export class SchedulerEventDialogComponent extends DialogComponent<SchedulerEven
             this.schedulerEvent.configuration.metadata = {
               deviceId: this.ctx.datasources[0].entityId
             };
-            return this.schedulerEventService.saveSchedulerEvent(this.deepTrim(this.schedulerEvent)).subscribe(
-              () => {
-                this.dialogRef.close(true);
-              }
-            );
+            return this.schedulerEventService.saveSchedulerEvent(this.deepTrim(this.schedulerEvent));
           })
-        )
+        ).subscribe(() => {
+          this.dialogRef.close(true);
+        });
       } else {
         const pageLink = new PageLink(1);
         this.entityViewService.getUserEntityViews(pageLink).pipe(
           // @ts-ignore
           mergeMap((res) => {
-            if(!res.data.length){
+            if (!res.data.length) {
               this.dialogRef.close(false);
             }
             this.schedulerEvent.configuration.originatorId = res.data[0].id;
             this.schedulerEvent.configuration.metadata = {
               deviceId: res.data[0].entityId.id
             };
-            return this.schedulerEventService.saveSchedulerEvent(this.deepTrim(this.schedulerEvent)).subscribe(
-              () => {
-                this.dialogRef.close(true);
-              }
-            );
+            return this.schedulerEventService.saveSchedulerEvent(this.deepTrim(this.schedulerEvent));
           })
-        )
+        ).subscribe(() => {
+          this.dialogRef.close(true);
+        });
       }
     }
   }
