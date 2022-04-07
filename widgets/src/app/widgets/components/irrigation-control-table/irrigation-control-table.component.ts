@@ -886,11 +886,11 @@ export class IrrigationControlTableComponent extends PageComponent implements On
     this.rowStyleCache.length = 0;
   }
 
-  public onCheckboxChage(event, entityId) {
-    let valveStatus = { key: 'valveStatus', value: event.checked ? 'Open' : 'Close' };
+  public onCheckboxChage(event, entityId, entity) {
+    let valveRequest = { key: 'valveRequest', value: event.checked };
     let status = { key: 'status', value: event.checked ? 'Enabled' : 'Disabled' };
     // @ts-ignore
-    let attrToUpdate = this.settings.attributeToUpdate === 'valveStatus' ? valveStatus : status;
+    let attrToUpdate = this.settings.attributeToUpdate === 'valveRequest' ? valveRequest : status;
     this.attributeService.saveEntityAttributes(entityId, AttributeScope.SERVER_SCOPE,
       [attrToUpdate]).pipe(
       this.ctx.rxjs.mergeMap(() => {
@@ -900,7 +900,7 @@ export class IrrigationControlTableComponent extends PageComponent implements On
         res.forEach(relation => {
           if (relation.type === 'zone-valve') {
             this.attributeService.saveEntityAttributes(relation.to, AttributeScope.SERVER_SCOPE,
-              [valveStatus]).subscribe();
+              [valveRequest]).subscribe();
           }
         })
         return this.ctx.rxjs.of([]);
@@ -909,8 +909,8 @@ export class IrrigationControlTableComponent extends PageComponent implements On
 
   public checkStatus(entity) {
     // @ts-ignore
-    if (this.settings?.attributeToUpdate === 'valveStatus') {
-      return entity.valveStatus === 'Open'
+    if (this.settings?.attributeToUpdate === 'valveRequest') {
+      return entity.valveRequest === 'true';
     }
 
     return entity?.status === 'Enabled'
