@@ -18,16 +18,6 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <mat-form-field class="mat-block">
-        <mat-label translate>scheduler.name</mat-label>
-        <input matInput formControlName="name" required>
-        <mat-error *ngIf="schedulerEventFormGroup.get('name').hasError('required')">
-          {{ 'scheduler.name-required' | translate }}
-        </mat-error>
-        <mat-error *ngIf="schedulerEventFormGroup.get('name').hasError('maxlength')">
-          {{ 'scheduler.name-max-length' | translate }}
-        </mat-error>
-      </mat-form-field>
       <mat-tab-group dynamicHeight>
         <mat-tab label="{{ 'scheduler.configuration' | translate }}">
           <div fxLayout="column" class="mat-padding">
