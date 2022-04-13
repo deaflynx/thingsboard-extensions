@@ -1,3 +1,7 @@
+///
+/// Copyright © 2021 ThingsBoard, Inc.
+///
+
 import {
   AfterViewInit,
   ChangeDetectorRef,

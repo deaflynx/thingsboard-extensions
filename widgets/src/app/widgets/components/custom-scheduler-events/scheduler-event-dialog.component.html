@@ -1,3 +1,8 @@
+<!--
+
+    Copyright © 2021 ThingsBoard, Inc.
+
+-->
 <form [formGroup]="schedulerEventFormGroup" (ngSubmit)="save()">
   <mat-toolbar fxLayout="row" color="primary">
     <h2 translate>{{ isAdd ? 'scheduler.create' : (readonly ? 'scheduler.view' : 'scheduler.edit')}}</h2>

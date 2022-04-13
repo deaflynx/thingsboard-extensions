@@ -1,3 +1,7 @@
+///
+/// Copyright © 2021 ThingsBoard, Inc.
+///
+
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
