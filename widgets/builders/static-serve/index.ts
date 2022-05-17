@@ -5,7 +5,7 @@
 import { BuilderContext, BuilderOutput, createBuilder } from '@angular-devkit/architect';
 import * as express from 'express';
 import * as http from 'http';
-import { NgPackagrBuilderOptions } from '@angular-devkit/build-ng-packagr';
+import { NgPackagrBuilderOptions } from '@angular-devkit/build-angular';
 import { resolve } from 'path';
 import { from, Observable } from 'rxjs';
 import { mapTo, switchMap, tap } from 'rxjs/operators';
@@ -66,7 +66,14 @@ export function createServer(options: StaticServeOptions, context: BuilderContex
   for (const path of Object.keys(staticServeConfig)) {
     const route = staticServeConfig[path];
     app.get(path, (req, res) => {
-      res.sendFile(resolve(context.workspaceRoot, route.target));
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Headers', 'origin, content-type, accept');
+      if (path.endsWith('*')) {
+        const target = req.params[0];
+        res.sendFile(resolve(context.workspaceRoot, route.target + target));
+      } else {
+        res.sendFile(resolve(context.workspaceRoot, route.target));
+      }
     });
   }
 
