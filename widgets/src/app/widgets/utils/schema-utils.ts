@@ -16,6 +16,8 @@ export function initSchema(): JsonSettingsSchema {
     };
 }
 
+
+
 export function addGroupInfo(schema: JsonSettingsSchema, title: string) {
     schema.groupInfoes.push({
         formIndex: schema.groupInfoes?.length || 0,

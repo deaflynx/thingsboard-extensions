@@ -2,10 +2,10 @@
  * Copyright © 2021 ThingsBoard, Inc.
  */
 const STATIC_SERVE_CONFIG = {
-  '/static/widgets/thingsboard-extension-widgets.js': {
+  '/static/thingsboard-extension-widgets.js': {
     'target': 'dist/widget-extension/bundles/thingsboard-extension-widgets.umd.js'
   },
-  '/static/widgets/thingsboard-extension-widgets.umd.js.map': {
+  '/static/thingsboard-extension-widgets.umd.js.map': {
     'target': `dist/widget-extension/bundles/thingsboard-extension-widgets.umd.js.map`
   }
 }

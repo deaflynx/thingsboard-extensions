@@ -6,26 +6,20 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import addCustomWidgetLocale from './locale/custom-widget-locale.constant';
-import { ExampleModule } from './components/example/example.module';
+import { TbIngramChartGaugeModule } from './components/tb-ingram-chart-gauge/tb-ingram-chart-gauge.module';
 import { SharedModule } from '@shared/public-api';
-import { HomeComponentsModule } from '@home/components/public-api';
-import { ExampleMap } from './components/map/example-map.component';
-import { CustomAlarmsTableWidgetComponent } from './components/alarm/custom-alarms-table-widget.component';
+import {TbIngramAlarmChartModule} from "./components/tb-ingram-alarm-chart/tb-ingram-alarm-chart.module";
 
 @NgModule({
   declarations: [
-    ExampleMap,
-    CustomAlarmsTableWidgetComponent
   ],
   imports: [
     CommonModule,
-    HomeComponentsModule,
-    SharedModule
+    SharedModule,
   ],
   exports: [
-    ExampleMap,
-    ExampleModule,
-    CustomAlarmsTableWidgetComponent
+    TbIngramChartGaugeModule,
+    TbIngramAlarmChartModule,
   ]
 })
 export class ThingsboardExtensionWidgetsModule {

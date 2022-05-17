@@ -1,0 +1,27 @@
+<!--
+
+    Copyright © 2021 ThingsBoard, Inc.
+
+-->
+<div class="chartContainer" [style.width]="layoutConfig.chartContainerWidth" [style.minWidth]="layoutConfig.chartContainerWidth">
+  <div id="Chart" #Chart></div>
+  <tb-seneca-legend id="chartLegend"
+                    *ngIf="ctx.settings.displayChartLegend"
+                    [ngStyle]="legendStyle"
+                    [legendConfig]="legendConfig"
+                    [legendData]="legendData"
+                    (legendKeyHiddenChange)="onLegendKeyHiddenChange($event)">
+  </tb-seneca-legend>
+</div>
+<div class="gaugesContainer"  [style.minWidth]="layoutConfig.gaugesContainerWidth">
+<!--  {{layoutConfig.gaugesContainerWidth}}-->
+  <div class="gauge-canvas" #gauges *ngFor="let gauge of gaugesCtxArray; index as i"
+       [style.display]="gauge.hidden ? 'none' : 'block'"
+       [style.margin]="layoutConfig.gaugesSpacing + 'px'"
+       [style.border]="gauge.settings.enableBorder ? gauge.settings.enableBorder ? gauge.settings.borderWidth+'px solid '+ gauge.settings.borderColor : 'none' : 'none'"
+       [style.backgroundColor]="gauge.settings.backgroundColor" [style.height]="layoutConfig.columnLaoutHeight"
+       [style.minWidth]="layoutConfig.gaugesWidth" [style.width]="layoutConfig.gaugesWidth">
+    <canvas [id]="'gauge_'+i"></canvas>
+  </div>
+</div>
+

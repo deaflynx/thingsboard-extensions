@@ -58,6 +58,9 @@
       ],
       "jstree": [
         "node_modules/jstree/dist/jstree.min.js"
+      ],
+      "canvas-gauges": [
+        "node_modules/canvas-gauges/gauge.min.js"
       ]
     }
   }

@@ -5,13 +5,18 @@
   "description": "ThingsBoard Extension Widgets",
   "scripts": {
     "cleanup": "rm -rf ./target",
-    "getthingsboard": "git clone --depth 1 git@github.com:thingsboard/thingsboard.git ./target/git-tmp/thingsboard",
+    "getthingsboard": "git clone --depth 1 --branch release-3.2 git@github.com:thingsboard/thingsboard.git ./target/git-tmp/thingsboard",
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve",
     "build": "ng build && node install.js",
     "e2e": "ng e2e"
   },
-  "dependencies": {},
+  "dependencies": {
+    "canvas-gauges": "^2.1.7"
+  },
+  "bundledDependencies": [
+    "canvas-gauges"
+  ],
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.901.12",
     "@angular-devkit/build-ng-packagr": "~0.901.12",

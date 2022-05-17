@@ -1,0 +1,78 @@
+/**
+ * Copyright © 2021 ThingsBoard, Inc.
+ */
+:host {
+  table.tb-legend {
+    font-size: 12px;
+
+    &.tb-legend-column {
+      width: 100%;
+    }
+
+    &.tb-legend-row {
+      width: auto;
+      margin-left: auto;
+    }
+
+    .tb-legend-header,
+    .tb-legend-value {
+      text-align: right;
+    }
+
+    .tb-legend-header {
+      th {
+        padding: 0 10px 1px 0;
+        color: rgb(255, 110, 64);
+        white-space: nowrap;
+        font-size: 12px;
+      }
+    }
+
+    .tb-legend-keys {
+      td {
+        font-size: 12px;
+      }
+      td.tb-legend-label,
+      td.tb-legend-value {
+        padding: 2px 10px;
+        white-space: nowrap;
+      }
+
+      .tb-legend-type {
+        min-width: 50px;
+        padding: 0 10px 1px 0;
+        font-weight: 700;
+        color: rgb(255, 110, 64);
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .tb-legend-line {
+        display: inline-block;
+        width: 15px;
+        height: 3px;
+        vertical-align: middle;
+      }
+
+      .tb-legend-label {
+        padding: 2px 10px;
+        text-align: left;
+        white-space: nowrap;
+        outline: none;
+
+        &.tb-horizontal {
+          width: 95%;
+        }
+
+        &.tb-hidden-label {
+          text-decoration: line-through;
+          opacity: .6;
+        }
+      }
+
+      &.tb-row-direction {
+        display: inline-block;
+      }
+    }
+  }
+}
