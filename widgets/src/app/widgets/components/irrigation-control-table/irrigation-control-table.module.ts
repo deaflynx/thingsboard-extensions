@@ -20,30 +20,32 @@ import {MatPaginatorModule} from "@angular/material/paginator";
 import {MatInputModule} from "@angular/material/input";
 import {MatCheckboxModule} from "@angular/material/checkbox";
 import {MatButtonModule} from "@angular/material/button";
+import {MatSlideToggleModule} from "@angular/material/slide-toggle";
 
 @NgModule({
   declarations: [
     IrrigationControlTableComponent
   ],
-  imports: [
-    CommonModule,
-    MatToolbarModule,
-    MatTooltipModule,
-    MatIconModule,
-    MatFormFieldModule,
-    ExtendedModule,
-    FormsModule,
-    TranslateModule,
-    MatTableModule,
-    MatSortModule,
-    MatMenuModule,
-    MatDividerModule,
-    MatPaginatorModule,
-    MatInputModule,
-    MatCheckboxModule,
-    MatButtonModule,
-    FlexModule
-  ],
+    imports: [
+        CommonModule,
+        MatToolbarModule,
+        MatTooltipModule,
+        MatIconModule,
+        MatFormFieldModule,
+        ExtendedModule,
+        FormsModule,
+        TranslateModule,
+        MatTableModule,
+        MatSortModule,
+        MatMenuModule,
+        MatDividerModule,
+        MatPaginatorModule,
+        MatInputModule,
+        MatCheckboxModule,
+        MatButtonModule,
+        FlexModule,
+        MatSlideToggleModule
+    ],
   exports: [
     IrrigationControlTableComponent
   ]
