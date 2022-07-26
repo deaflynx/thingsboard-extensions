@@ -1,0 +1,106 @@
+/**
+ * Copyright © 2022 ThingsBoard, Inc.
+ */
+#plot-bar {
+  .bar {
+    position: relative;
+    height: 50px;
+    margin-bottom: -10px;
+  }
+
+  .bar-sector {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+    &:focus {
+      outline: none;
+    }
+
+    span {
+      overflow: hidden;
+      font-family: sans-serif;
+      font-weight: 600;
+      color: #545454;
+      text-overflow: ellipsis;
+      text-transform: capitalize;
+      white-space: nowrap;
+    }
+
+    .bar_custom_tooltip {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      padding: 5px;
+      font-size: 14px;
+      background-color: rgba(222, 222, 222, .9);
+      border-radius: 5px;
+      transform: translateX(-50%);
+
+      span span {
+        font-size: 13px;
+        font-weight: 400;
+      }
+    }
+
+    .bar_custom_tooltip_arrow {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-top: 10px solid rgba(218, 218, 218, .8);
+      border-right: 10px solid transparent;
+      border-left: 10px solid transparent;
+      transform: translateX(-50%);
+    }
+  }
+
+  .mode-bar {
+    position: absolute;
+    left: calc(100% + 2px);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    height: 100%;
+    overflow: hidden;
+    font-family: sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 13px;
+    color: #545454;
+    text-align: center;
+    //text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+#plot-body {
+  height: calc(100% - 50px);
+}
+
+.sdm-temp-cell-tooltip {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  .sdm-temp-cell-tooltip-close-button {
+    display: block;
+    color: #545454;
+    text-align: right;
+    text-decoration: none;
+    border-bottom: none;
+  }
+
+  #tooltip-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mode-bar {
+    font-weight: 500;
+    color: #545454;
+    text-align: center;
+  }
+}

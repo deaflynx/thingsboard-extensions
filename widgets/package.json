@@ -54,6 +54,8 @@
     "tslib": "^2.3.1",
     "tslint": "~6.1.3",
     "typescript": "~4.3.5",
-    "zone.js": "~0.11.4"
+    "zone.js": "~0.11.4",
+    "flot": "https://github.com/thingsboard/flot.git#0.9-work",
+    "flot.curvedlines": "https://github.com/MichaelZinsmaier/CurvedLines.git#master"
   }
 }
