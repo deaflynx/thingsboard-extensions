@@ -39,11 +39,10 @@ import {
   TooltipValueFormatFunction
 } from './flot-widget.models';
 import { AggregationType } from '@shared/public-api';
-import { CancelAnimationFrame } from '@core/services/raf.service';
 import { UtilsService } from '@core/public-api';
 import { DataKeyType } from '@shared/public-api';
 import Timeout = NodeJS.Timeout;
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { PageComponent, WidgetConfig } from '@shared/public-api';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
@@ -132,22 +131,6 @@ export class SmarterDMFlot {
 
   private readonly showTooltip: boolean;
 
-  private readonly animatedPie: boolean;
-
-  private pieDataAnimationDuration: number;
-
-  private pieData: DatasourceData[];
-
-  private pieRenderedData: any[];
-
-  private pieTargetData: any[];
-
-  private pieAnimationStartTime: number;
-
-  private pieAnimationLastTime: number;
-
-  private pieAnimationCaf: CancelAnimationFrame;
-
   constructor(private ctx: WidgetContext, private readonly chartType?: ChartType) {
     this.chartType = this.chartType || 'line';
     this.settings = ctx.settings as TbFlotSettings;
@@ -160,8 +143,8 @@ export class SmarterDMFlot {
 
     this.trackDecimals = ctx.decimals;
     this.trackUnits = ctx.units;
-    this.tooltipIndividual = this.chartType === 'pie' || (isDefined(this.settings.tooltipIndividual)
-      ? this.settings.tooltipIndividual : false);
+    this.tooltipIndividual = isDefined(this.settings.tooltipIndividual)
+      ? this.settings.tooltipIndividual : false;
     this.tooltipCumulative = isDefined(this.settings.tooltipCumulative) ? this.settings.tooltipCumulative : false;
     this.hideZeros = isDefined(this.settings.hideZeros) ? this.settings.hideZeros : false;
 
@@ -308,50 +291,6 @@ export class SmarterDMFlot {
           show: true
         };
       }
-    } else if (this.chartType === 'pie') {
-      this.options.series = {
-        pie: {
-          show: true,
-          label: {
-            show: this.settings.showLabels === true
-          },
-          radius: this.settings.radius || 1,
-          innerRadius: this.settings.innerRadius || 0,
-          stroke: {
-            color: '#fff',
-            width: 0
-          },
-          tilt: this.settings.tilt || 1,
-          shadow: {
-            left: 5,
-            top: 15,
-            alpha: 0.02
-          }
-        }
-      };
-
-      this.options.grid.clickable = true;
-
-      if (this.settings.stroke) {
-        this.options.series.pie.stroke.color = this.settings.stroke.color || '#fff';
-        this.options.series.pie.stroke.width = this.settings.stroke.width || 0;
-        if (this.options.series.pie.stroke.width) {
-          this.scalingPieRadius();
-        }
-      }
-
-      if (this.options.series.pie.label.show) {
-        this.options.series.pie.label.formatter = (label, series) => {
-          return `<div class='pie-label'>${series.dataKey.label}<br/>${Math.round(series.percent)}%</div>`;
-        };
-        this.options.series.pie.label.radius = 3 / 4;
-        this.options.series.pie.label.background = {
-          opacity: 0.8
-        };
-      }
-
-      // Experimental
-      this.animatedPie = this.settings.animatedPie === true;
     }
 
     if (this.ctx.defaultSubscription) {
@@ -579,18 +518,8 @@ export class SmarterDMFlot {
     if (this.plot) {
       this.plot.destroy();
     }
-    if (this.chartType === 'pie' && this.animatedPie) {
-      this.pieDataAnimationDuration = 250;
-      this.pieData = deepClone(this.subscription.data);
-      this.pieRenderedData = [];
-      this.pieTargetData = [];
-      for (let i = 0; i < this.subscription.data.length; i++) {
-        this.pieTargetData[i] = (this.subscription.data[i].data && this.subscription.data[i].data[0])
-          ? this.subscription.data[i].data[0][1] : 0;
-      }
-      this.pieDataRendered();
-    }
     this.plotInited = true;
+
     this.createPlot();
   }
 
@@ -678,12 +607,6 @@ export class SmarterDMFlot {
             }
             this.updateData();
           }
-        } else if (this.chartType === 'pie') {
-          if (this.animatedPie) {
-            this.nextPieDataAnimation(true);
-          } else {
-            this.updateData();
-          }
         }
       } else if (this.isMouseInteraction && this.plot) {
         this.updateTimeoutHandle = setTimeout(this.update.bind(this), 30);
@@ -716,34 +639,20 @@ export class SmarterDMFlot {
     }
   }
 
-  private scalingPieRadius() {
-    let scalingLine;
-    this.ctx.width > this.ctx.height ? scalingLine = this.ctx.height : scalingLine = this.ctx.width;
-    let changeRadius = this.options.series.pie.stroke.width / scalingLine;
-    this.options.series.pie.radius = changeRadius < 1 ? this.settings.radius - changeRadius : 0;
-  }
-
   public resize() {
     if (this.resizeTimeoutHandle) {
       clearTimeout(this.resizeTimeoutHandle);
       this.resizeTimeoutHandle = null;
     }
     if (this.plot && this.plotInited) {
-      if (this.chartType === 'pie' && this.settings.stroke?.width) {
-        this.scalingPieRadius();
-        this.redrawPlot();
+      const width = this.$element.width();
+      const height = this.$element.height();
+      if (width && height) {
+        this.plot.resize();
+        this.plot.setupGrid();
+        this.plot.draw();
       } else {
-        const width = this.$element.width();
-        const height = this.$element.height();
-        if (width && height) {
-          this.plot.resize();
-          if (this.chartType !== 'pie') {
-            this.plot.setupGrid();
-          }
-          this.plot.draw();
-        } else {
-          this.resizeTimeoutHandle = setTimeout(this.resize.bind(this), 30);
-        }
+        this.resizeTimeoutHandle = setTimeout(this.resize.bind(this), 30);
       }
     }
   }
@@ -804,11 +713,31 @@ export class SmarterDMFlot {
       const width = this.$element.width();
       const height = this.$element.height();
       if (width && height) {
-        if (this.chartType === 'pie' && this.animatedPie) {
-          this.plot = $.plot(this.$element, this.pieData, this.options) as JQueryPlot;
-        } else {
-          this.plot = $.plot(this.$element, this.subscription.data, this.options) as JQueryPlot;
+
+        /*var d1 = [];
+        var d2 = [];
+        for (var i = 0; i <= 10; i += 1) {
+          d1.push([i, parseInt(String(Math.random() * 30 - 10))]);
+          d2.push([i, parseInt(String(Math.random() * 30 - 10))]);
         }
+        // @ts-ignore
+        this.plot = $.plot('#placeholder', [
+          {
+            data: d1,
+            threshold: {
+              below: 10,
+              color: "red"
+            },
+            lines: {
+              show: true,
+              fill: false
+            },
+            color: "green"
+          }
+        ]) as JQueryPlot;*/
+
+        // @ts-ignore
+        this.plot = $.plot(this.$element, this.subscription.data, this.options) as JQueryPlot;
       } else {
         this.createPlotTimeoutHandle = setTimeout(this.createPlot.bind(this), 30);
       }
@@ -817,9 +746,7 @@ export class SmarterDMFlot {
 
   private updateData() {
     this.plot.setData(this.subscription.data);
-    if (this.chartType !== 'pie') {
-      this.plot.setupGrid();
-    }
+    this.plot.setupGrid();
     this.plot.draw();
   }
 
@@ -1109,14 +1036,6 @@ export class SmarterDMFlot {
     return tooltip;
   }
 
-  private formatPieTooltip(item: TbFlotPlotItem): string {
-    const units = item.series.dataKey.units && item.series.dataKey.units.length ? item.series.dataKey.units : this.trackUnits;
-    const decimals = isDefinedAndNotNull(item.series.dataKey.decimals) ? item.series.dataKey.decimals : this.trackDecimals;
-    const divElement = this.seriesInfoDiv(item.series.dataKey.label, item.series.dataKey.color,
-      item.datapoint[1][0][1], units, decimals, true, item.series.percent, item.series.dataKey.tooltipValueFormatFunction);
-    return divElement.prop('outerHTML');
-  }
-
   private formatChartTooltip(hoverInfo: TbFlotHoverInfo[], seriesIndex: number): string {
     let content = '';
     if (this.tooltipIndividual) {
@@ -1271,22 +1190,19 @@ export class SmarterDMFlot {
       let tooltipHtml;
       let hoverInfo: TbFlotHoverInfo[];
 
-      if (this.chartType === 'pie') {
-        tooltipHtml = this.formatPieTooltip(item);
-      } else {
-        hoverInfo = this.getHoverInfo(this.plot.getData(), pos);
-        if (isNumber(hoverInfo[0].time) || (hoverInfo[1] && isNumber(hoverInfo[1].time))) {
-          hoverInfo[0].seriesHover.sort((a, b) => {
+      hoverInfo = this.getHoverInfo(this.plot.getData(), pos);
+      if (isNumber(hoverInfo[0].time) || (hoverInfo[1] && isNumber(hoverInfo[1].time))) {
+        hoverInfo[0].seriesHover.sort((a, b) => {
+          return b.value - a.value;
+        });
+        if (hoverInfo[1] && hoverInfo[1].seriesHover.length) {
+          hoverInfo[1].seriesHover.sort((a, b) => {
             return b.value - a.value;
           });
-          if (hoverInfo[1] && hoverInfo[1].seriesHover.length) {
-            hoverInfo[1].seriesHover.sort((a, b) => {
-              return b.value - a.value;
-            });
-          }
-          tooltipHtml = this.formatChartTooltip(hoverInfo, item ? item.seriesIndex : -1);
         }
+        tooltipHtml = this.formatChartTooltip(hoverInfo, item ? item.seriesIndex : -1);
       }
+
       if (tooltipHtml) {
         this.tooltip.html(tooltipHtml)
           .css({top: 0, left: 0})
@@ -1359,7 +1275,6 @@ export class SmarterDMFlot {
     if (!this.plot) {
       return;
     }
-    this.onPieSliceClick(e, item);
   }
 
   private getHoverInfo(seriesList: TbFlotPlotDataSeries[], pos: JQueryPlotPoint): TbFlotHoverInfo[] {
@@ -1491,76 +1406,6 @@ export class SmarterDMFlot {
       }
     }
     return j / ps - 1;
-  }
-
-  pieDataRendered() {
-    for (let i = 0; i < this.pieTargetData.length; i++) {
-      const value = this.pieTargetData[i] ? this.pieTargetData[i] : 0;
-      this.pieRenderedData[i] = value;
-      if (!this.pieData[i].data[0]) {
-        this.pieData[i].data[0] = [0, 0];
-      }
-      this.pieData[i].data[0][1] = value;
-    }
-  }
-
-  nextPieDataAnimation(start) {
-    if (start) {
-      this.finishPieDataAnimation();
-      this.pieAnimationStartTime = this.pieAnimationLastTime = Date.now();
-      for (let i = 0; i < this.subscription.data.length; i++) {
-        this.pieTargetData[i] = (this.subscription.data[i].data && this.subscription.data[i].data[0])
-          ? this.subscription.data[i].data[0][1] : 0;
-      }
-    }
-    if (this.pieAnimationCaf) {
-      this.pieAnimationCaf();
-      this.pieAnimationCaf = null;
-    }
-    this.pieAnimationCaf = this.ctx.$scope.raf.raf(this.onPieDataAnimation.bind(this));
-  }
-
-  onPieDataAnimation() {
-    const time = Date.now();
-    const elapsed = time - this.pieAnimationLastTime; // this.pieAnimationStartTime;
-    const progress = (time - this.pieAnimationStartTime) / this.pieDataAnimationDuration;
-    if (progress >= 1) {
-      this.finishPieDataAnimation();
-    } else {
-      if (elapsed >= 40) {
-        for (let i = 0; i < this.pieTargetData.length; i++) {
-          const prevValue = this.pieRenderedData[i];
-          const targetValue = this.pieTargetData[i];
-          const value = prevValue + (targetValue - prevValue) * progress;
-          if (!this.pieData[i].data[0]) {
-            this.pieData[i].data[0] = [0, 0];
-          }
-          this.pieData[i].data[0][1] = value;
-        }
-        this.plot.setData(this.pieData);
-        this.plot.draw();
-        this.pieAnimationLastTime = time;
-      }
-      this.nextPieDataAnimation(false);
-    }
-  }
-
-  private finishPieDataAnimation() {
-    this.pieDataRendered();
-    this.plot.setData(this.pieData);
-    this.plot.draw();
-  }
-
-  private onPieSliceClick($event: any, item: TbFlotPlotItem) {
-    const descriptors = this.ctx.actionsApi.getActionDescriptors('sliceClick');
-    if ($event && descriptors.length) {
-      $event.stopPropagation();
-      const entityInfo = this.ctx.actionsApi.getActiveEntityInfo();
-      const entityId = entityInfo ? entityInfo.entityId : null;
-      const entityName = entityInfo ? entityInfo.entityName : null;
-      const entityLabel = entityInfo ? entityInfo.entityLabel : null;
-      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item, entityLabel);
-    }
   }
 
 }
