@@ -65,7 +65,7 @@ import * as RxJS from 'rxjs';
 import * as RxJSOperators from 'rxjs/operators';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityId } from '@shared/public-api';
-import { SmarterDMFlot } from './flot-widget.component';
+import { LemFlot } from './flot-widget.component';
 
 export declare type NotificationType = 'info' | 'warn' | 'success' | 'error';
 export declare type NotificationHorizontalPosition = 'start' | 'center' | 'end' | 'left' | 'right';
@@ -162,7 +162,7 @@ export class WidgetContext {
   http: HttpClient;
   sanitizer: DomSanitizer;
   router: Router;
-  flot: SmarterDMFlot;
+  flot: LemFlot;
 
   private changeDetectorValue: ChangeDetectorRef;
   private containerChangeDetectorValue: ChangeDetectorRef;

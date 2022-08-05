@@ -51,7 +51,7 @@ import { AppState } from '@core/public-api';
 const tinycolor = (window as any).tinycolor;
 const moment = (window as any).moment;
 
-export class SmarterDMFlot {
+export class LemFlot {
 
   private readonly utils: UtilsService;
 
@@ -130,6 +130,16 @@ export class SmarterDMFlot {
   private flotClickHandler = this.onFlotClick.bind(this);
 
   private readonly showTooltip: boolean;
+
+  private threshold = [
+    {
+      below: 0,
+      color: "red"
+    },
+    {
+      below: -100,
+      color: "brown"
+    }];
 
   constructor(private ctx: WidgetContext, private readonly chartType?: ChartType) {
     this.chartType = this.chartType || 'line';
@@ -713,28 +723,8 @@ export class SmarterDMFlot {
       const width = this.$element.width();
       const height = this.$element.height();
       if (width && height) {
-
-        /*var d1 = [];
-        var d2 = [];
-        for (var i = 0; i <= 10; i += 1) {
-          d1.push([i, parseInt(String(Math.random() * 30 - 10))]);
-          d2.push([i, parseInt(String(Math.random() * 30 - 10))]);
-        }
         // @ts-ignore
-        this.plot = $.plot('#placeholder', [
-          {
-            data: d1,
-            threshold: {
-              below: 10,
-              color: "red"
-            },
-            lines: {
-              show: true,
-              fill: false
-            },
-            color: "green"
-          }
-        ]) as JQueryPlot;*/
+        this.subscription.data[0].threshold = this.threshold;
 
         // @ts-ignore
         this.plot = $.plot(this.$element, this.subscription.data, this.options) as JQueryPlot;
@@ -1435,7 +1425,7 @@ export class FlotWidgetComponent extends PageComponent implements OnInit {
     this.ctx.$scope.FlotWidgetComponent = this;
     this.settings = this.ctx.settings;
     this.widgetConfig = this.ctx.widgetConfig;
-    this.ctx.flot = new SmarterDMFlot(this.ctx);
+    this.ctx.flot = new LemFlot(this.ctx);
   }
 }
 
