@@ -7,17 +7,12 @@ import {
   DataSet,
   Datasource,
   DatasourceData, FormattedData,
-  JsonSettingsSchema,
   Widget,
   WidgetActionDescriptor,
-  WidgetActionSource,
   WidgetConfig,
   WidgetControllerDescriptor,
   WidgetType,
-  widgetType,
   WidgetTypeDescriptor,
-  WidgetTypeDetails,
-  WidgetTypeParameters
 } from '@shared/public-api';
 import { Timewindow, WidgetTimewindow } from '@shared/public-api';
 import {
@@ -25,7 +20,7 @@ import {
   IStateController,
   IWidgetSubscription,
   IWidgetUtils,
-  RpcApi, StateParams,
+  RpcApi,
   SubscriptionEntityInfo,
   TimewindowFunctions,
   WidgetActionsApi,
@@ -36,7 +31,6 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/public-api';
 import { WidgetTypeId } from '@shared/public-api';
 import { TenantId } from '@shared/public-api';
-import { WidgetLayout } from '@shared/public-api';
 import { formatValue, isDefined } from '@core/public-api';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/public-api';
@@ -64,7 +58,6 @@ import { Router } from '@angular/router';
 import * as RxJS from 'rxjs';
 import * as RxJSOperators from 'rxjs/operators';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { EntityId } from '@shared/public-api';
 import { LemFlot } from './flot-widget.component';
 
 export declare type NotificationType = 'info' | 'warn' | 'success' | 'error';
@@ -402,176 +395,4 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   image?: string;
   description?: string;
   componentFactory?: ComponentFactory<IDynamicWidgetComponent>;
-}
-
-export interface WidgetConfigComponentData {
-  config: WidgetConfig;
-  layout: WidgetLayout;
-  widgetType: widgetType;
-  typeParameters: WidgetTypeParameters;
-  actionSources: {[actionSourceId: string]: WidgetActionSource};
-  isDataEnabled: boolean;
-  settingsSchema: JsonSettingsSchema;
-  dataKeySettingsSchema: JsonSettingsSchema;
-  latestDataKeySettingsSchema: JsonSettingsSchema;
-  settingsDirective: string;
-  dataKeySettingsDirective: string;
-  latestDataKeySettingsDirective: string;
-}
-
-export const MissingWidgetType: WidgetInfo = {
-  type: widgetType.latest,
-  widgetName: 'Widget type not found',
-  alias: 'undefined',
-  sizeX: 8,
-  sizeY: 6,
-  resources: [],
-  templateHtml: '<div class="tb-widget-error-container">' +
-    '<div class="tb-widget-error-msg" innerHTML="{{\'widget.widget-type-not-found\' | translate }}"></div>' +
-    '</div>',
-  templateCss: '',
-  controllerScript: 'self.onInit = function() {}',
-  settingsSchema: '{}\n',
-  dataKeySettingsSchema: '{}\n',
-  image: null,
-  description: null,
-  defaultConfig: '{\n' +
-    '"title": "Widget type not found",\n' +
-    '"datasources": [],\n' +
-    '"settings": {}\n' +
-    '}\n',
-  typeParameters: {}
-};
-
-export const ErrorWidgetType: WidgetInfo = {
-  type: widgetType.latest,
-  widgetName: 'Error loading widget',
-  alias: 'error',
-  sizeX: 8,
-  sizeY: 6,
-  resources: [],
-  templateHtml: '<div class="tb-widget-error-container">' +
-    '<div translate class="tb-widget-error-msg">widget.widget-type-load-error</div>' +
-    '<div *ngFor="let error of errorMessages" class="tb-widget-error-msg">{{ error }}</div>' +
-    '</div>',
-  templateCss: '',
-  controllerScript: 'self.onInit = function() {}',
-  settingsSchema: '{}\n',
-  dataKeySettingsSchema: '{}\n',
-  image: null,
-  description: null,
-  defaultConfig: '{\n' +
-    '"title": "Widget failed to load",\n' +
-    '"datasources": [],\n' +
-    '"settings": {}\n' +
-    '}\n',
-  typeParameters: {}
-};
-
-export interface WidgetTypeInstance {
-  getSettingsSchema?: () => string;
-  getDataKeySettingsSchema?: () => string;
-  getLatestDataKeySettingsSchema?: () => string;
-  typeParameters?: () => WidgetTypeParameters;
-  useCustomDatasources?: () => boolean;
-  actionSources?: () => {[actionSourceId: string]: WidgetActionSource};
-
-  onInit?: () => void;
-  onDataUpdated?: () => void;
-  onLatestDataUpdated?: () => void;
-  onResize?: () => void;
-  onEditModeChanged?: () => void;
-  onMobileModeChanged?: () => void;
-  onDestroy?: () => void;
-}
-
-export function detailsToWidgetInfo(widgetTypeDetailsEntity: WidgetTypeDetails): WidgetInfo {
-  const widgetInfo = toWidgetInfo(widgetTypeDetailsEntity);
-  widgetInfo.image = widgetTypeDetailsEntity.image;
-  widgetInfo.description = widgetTypeDetailsEntity.description;
-  return widgetInfo;
-}
-
-export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
-  return {
-    widgetName: widgetTypeEntity.name,
-    alias: widgetTypeEntity.alias,
-    type: widgetTypeEntity.descriptor.type,
-    sizeX: widgetTypeEntity.descriptor.sizeX,
-    sizeY: widgetTypeEntity.descriptor.sizeY,
-    resources: widgetTypeEntity.descriptor.resources,
-    templateHtml: widgetTypeEntity.descriptor.templateHtml,
-    templateCss: widgetTypeEntity.descriptor.templateCss,
-    controllerScript: widgetTypeEntity.descriptor.controllerScript,
-    settingsSchema: widgetTypeEntity.descriptor.settingsSchema,
-    dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
-    latestDataKeySettingsSchema: widgetTypeEntity.descriptor.latestDataKeySettingsSchema,
-    settingsDirective: widgetTypeEntity.descriptor.settingsDirective,
-    dataKeySettingsDirective: widgetTypeEntity.descriptor.dataKeySettingsDirective,
-    latestDataKeySettingsDirective: widgetTypeEntity.descriptor.latestDataKeySettingsDirective,
-    defaultConfig: widgetTypeEntity.descriptor.defaultConfig
-  };
-}
-
-export function toWidgetTypeDetails(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
-                                    bundleAlias: string, createdTime: number): WidgetTypeDetails {
-  const widgetTypeEntity = toWidgetType(widgetInfo, id, tenantId, bundleAlias, createdTime);
-  const widgetTypeDetails: WidgetTypeDetails = {...widgetTypeEntity,
-    description: widgetInfo.description,
-    image: widgetInfo.image
-  };
-  return widgetTypeDetails;
-}
-
-export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
-                             bundleAlias: string, createdTime: number): WidgetType {
-  const descriptor: WidgetTypeDescriptor = {
-    type: widgetInfo.type,
-    sizeX: widgetInfo.sizeX,
-    sizeY: widgetInfo.sizeY,
-    resources: widgetInfo.resources,
-    templateHtml: widgetInfo.templateHtml,
-    templateCss: widgetInfo.templateCss,
-    controllerScript: widgetInfo.controllerScript,
-    settingsSchema: widgetInfo.settingsSchema,
-    dataKeySettingsSchema: widgetInfo.dataKeySettingsSchema,
-    latestDataKeySettingsSchema: widgetInfo.latestDataKeySettingsSchema,
-    settingsDirective: widgetInfo.settingsDirective,
-    dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
-    latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,
-    defaultConfig: widgetInfo.defaultConfig
-  };
-  return {
-    id,
-    tenantId,
-    createdTime,
-    bundleAlias,
-    alias: widgetInfo.alias,
-    name: widgetInfo.widgetName,
-    descriptor
-  };
-}
-
-export function updateEntityParams(params: StateParams, targetEntityParamName?: string, targetEntityId?: EntityId,
-                                   entityName?: string, entityLabel?: string) {
-  if (targetEntityId) {
-    let targetEntityParams: StateParams;
-    if (targetEntityParamName && targetEntityParamName.length) {
-      targetEntityParams = params[targetEntityParamName];
-      if (!targetEntityParams) {
-        targetEntityParams = {};
-        params[targetEntityParamName] = targetEntityParams;
-        params.targetEntityParamName = targetEntityParamName;
-      }
-    } else {
-      targetEntityParams = params;
-    }
-    targetEntityParams.entityId = targetEntityId;
-    if (entityName) {
-      targetEntityParams.entityName = entityName;
-    }
-    if (entityLabel) {
-      targetEntityParams.entityLabel = entityLabel;
-    }
-  }
 }
