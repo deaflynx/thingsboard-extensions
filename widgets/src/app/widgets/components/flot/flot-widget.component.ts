@@ -4,6 +4,8 @@
 
 import { WidgetContext } from './widget-component.models';
 import {
+  AppState,
+  AttributeService,
   createLabelFromDatasource,
   deepClone,
   insertVariable,
@@ -12,21 +14,28 @@ import {
   isEqual,
   isNumber,
   isNumeric,
-  isUndefined
+  isUndefined,
+  UtilsService
 } from '@core/public-api';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import {
+  AggregationType,
+  AttributeScope,
   DataKey,
+  DataKeyType,
   Datasource,
   DatasourceData,
   DatasourceType,
+  PageComponent,
+  WidgetConfig,
   widgetType
 } from '@shared/public-api';
 import {
   ChartType,
   TbFlotAxisOptions,
   TbFlotHoverInfo,
-  TbFlotKeySettings, TbFlotLatestKeySettings,
+  TbFlotKeySettings,
+  TbFlotLatestKeySettings,
   TbFlotPlotAxis,
   TbFlotPlotDataSeries,
   TbFlotPlotItem,
@@ -38,14 +47,11 @@ import {
   TbFlotTicksFormatterFunction,
   TooltipValueFormatFunction
 } from './flot-widget.models';
-import { AggregationType } from '@shared/public-api';
-import { UtilsService } from '@core/public-api';
-import { DataKeyType } from '@shared/public-api';
-import Timeout = NodeJS.Timeout;
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { PageComponent, WidgetConfig } from '@shared/public-api';
+import { Component, Input, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AppState } from '@core/public-api';
+import { forkJoin } from 'rxjs';
+import { map } from 'rxjs/operators';
+import Timeout = NodeJS.Timeout;
 
 
 const tinycolor = (window as any).tinycolor;
@@ -131,18 +137,9 @@ export class LemFlot {
 
   private readonly showTooltip: boolean;
 
-  private threshold = [
-    {
-      below: 22,
-      color: "red"
-    },
-    {
-      below: 23,
-      color: "brown"
-    }
-  ];
-
-  constructor(private ctx: WidgetContext, private readonly chartType?: ChartType) {
+  constructor(private ctx: WidgetContext,
+              private attributeService?: AttributeService,
+              private readonly chartType?: ChartType) {
     this.chartType = this.chartType || 'line';
     this.settings = ctx.settings as TbFlotSettings;
     this.utils = this.ctx.$injector.get(UtilsService);
@@ -364,174 +361,199 @@ export class LemFlot {
       }
     }
 
-    for (let i = 0; i < this.subscription.data.length; i++) {
-      const series = this.subscription.data[i] as TbFlotSeries;
-      colors.push(series.dataKey.color);
-      const keySettings = series.dataKey.settings;
-      series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
-      if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
-        try {
-          series.dataKey.tooltipValueFormatFunction = new Function('value',
-            keySettings.tooltipValueFormatter) as TooltipValueFormatFunction;
-        } catch (e) {
-          series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
-        }
-      }
-      series.lines = {
-        fill: keySettings.fillLines === true
-      };
+    let $tasks = [];
+    this.subscription.data.map(data => {
+      const entityId = data.datasource.entity.id;
+      $tasks.push(this.attributeService.getEntityAttributes(entityId, AttributeScope.SERVER_SCOPE, ['min', 'max']).pipe(
+        map(attributes => {
+          const result = {};
+          result['id'] = entityId.id;
+          result['min'] = attributes.find(el => el.key === 'min');
+          result['max'] = attributes.find(el => el.key === 'max');
+          result['minColor'] = data.datasource.latestDataKeys.filter(key => key.name === 'min').map(key => key.color)[0];
+          result['maxColor'] = data.datasource.latestDataKeys.filter(key => key.name === 'max').map(key => key.color)[0];
+          return result;
+        })
+      ));
+    });
 
-      if (this.settings.stack && !this.comparisonEnabled) {
-        series.stack = !keySettings.excludeFromStacking;
-      } else {
-        series.stack = false;
-      }
+    forkJoin($tasks).subscribe(attributes => {
+      this.ctx.$scope.lemThresholdsMap = attributes;
+      this.ctx.$scope.defaultColors = [];
 
-      if (this.chartType === 'line' || this.chartType === 'state') {
-        series.lines.show = keySettings.showLines !== false;
-      } else {
-        series.lines.show = keySettings.showLines === true;
-      }
-      if (isDefined(keySettings.lineWidth) && keySettings.lineWidth !== null) {
-        series.lines.lineWidth = keySettings.lineWidth;
-      }
-      series.points = {
-        show: false,
-        radius: 8
-      };
-      if (keySettings.showPoints === true) {
-        series.points.show = true;
-        series.points.lineWidth = isDefined(keySettings.showPointsLineWidth) ? keySettings.showPointsLineWidth : 5;
-        series.points.radius = isDefined(keySettings.showPointsRadius) ? keySettings.showPointsRadius : 3;
-        series.points.symbol = isDefined(keySettings.showPointShape) ? keySettings.showPointShape : 'circle';
-        if (series.points.symbol === 'custom' && keySettings.pointShapeFormatter) {
+      for (let i = 0; i < this.subscription.data.length; i++) {
+        const series = this.subscription.data[i] as TbFlotSeries;
+        // @ts-ignore
+        const maxThreshold = this.ctx.$scope.lemThresholdsMap.filter(el => el.id === series.datasource.entityId)[0];
+        // @ts-ignore
+        this.ctx.$scope.defaultColors.push(series.dataKey.color);
+        colors.push(maxThreshold?.max ? maxThreshold.maxColor : series.dataKey.color);
+        const keySettings = series.dataKey.settings;
+        series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
+        if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
           try {
-            series.points.symbol = new Function('ctx, x, y, radius, shadow', keySettings.pointShapeFormatter);
+            series.dataKey.tooltipValueFormatFunction = new Function('value',
+              keySettings.tooltipValueFormatter) as TooltipValueFormatFunction;
           } catch (e) {
-            series.points.symbol = 'circle';
+            series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
           }
         }
-      }
-      if (this.chartType === 'line' && this.settings.smoothLines && !series.points.show) {
-        series.curvedLines = {
-          apply: true
+        series.lines = {
+          fill: keySettings.fillLines === true
         };
-      }
 
-      const lineColor = tinycolor(series.dataKey.color);
-      lineColor.setAlpha(.75);
-
-      series.highlightColor = lineColor.toRgbString();
-
-      if (series.datasource.isAdditional) {
-        series.xaxisIndex = 1;
-        series.xaxis = 2;
-      } else {
-        series.xaxisIndex = 0;
-        series.xaxis = 1;
-      }
-
-      if (this.yaxis) {
-        const units = series.dataKey.units && series.dataKey.units.length ? series.dataKey.units : this.trackUnits;
-        let yaxis: TbFlotAxisOptions;
-        if (keySettings.showSeparateAxis) {
-          yaxis = this.createYAxis(keySettings, units);
-          this.yaxes.push(yaxis);
+        if (this.settings.stack && !this.comparisonEnabled) {
+          series.stack = !keySettings.excludeFromStacking;
         } else {
-          yaxis = yaxesMap[units];
-          if (!yaxis) {
-            yaxis = this.createYAxis(keySettings, units);
-            yaxesMap[units] = yaxis;
-            this.yaxes.push(yaxis);
+          series.stack = false;
+        }
+
+        if (this.chartType === 'line' || this.chartType === 'state') {
+          series.lines.show = keySettings.showLines !== false;
+        } else {
+          series.lines.show = keySettings.showLines === true;
+        }
+        if (isDefined(keySettings.lineWidth) && keySettings.lineWidth !== null) {
+          series.lines.lineWidth = keySettings.lineWidth;
+        }
+        series.points = {
+          show: false,
+          radius: 8
+        };
+        if (keySettings.showPoints === true) {
+          series.points.show = true;
+          series.points.lineWidth = isDefined(keySettings.showPointsLineWidth) ? keySettings.showPointsLineWidth : 5;
+          series.points.radius = isDefined(keySettings.showPointsRadius) ? keySettings.showPointsRadius : 3;
+          series.points.symbol = isDefined(keySettings.showPointShape) ? keySettings.showPointShape : 'circle';
+          if (series.points.symbol === 'custom' && keySettings.pointShapeFormatter) {
+            try {
+              series.points.symbol = new Function('ctx, x, y, radius, shadow', keySettings.pointShapeFormatter);
+            } catch (e) {
+              series.points.symbol = 'circle';
+            }
           }
         }
-        series.yaxisIndex = this.yaxes.indexOf(yaxis);
-        series.yaxis = series.yaxisIndex + 1;
-        yaxis.keysInfo[i] = {hidden: false};
-        yaxis.show = true;
+        if (this.chartType === 'line' && this.settings.smoothLines && !series.points.show) {
+          series.curvedLines = {
+            apply: true
+          };
+        }
 
-        if (keySettings.thresholds && keySettings.thresholds.length) {
-          for (const threshold of keySettings.thresholds) {
-            if (threshold.thresholdValueSource === 'predefinedValue' && isFinite(threshold.thresholdValue)) {
-              const colorIndex = this.subscription.data.length + predefinedThresholds.length;
-              this.generateThreshold(predefinedThresholds, series.yaxis, threshold.lineWidth,
-                threshold.color, colorIndex, threshold.thresholdValue);
-            } else if (threshold.thresholdEntityAlias && threshold.thresholdAttribute) {
-              const entityAliasId = this.ctx.aliasController.getEntityAliasId(threshold.thresholdEntityAlias);
-              if (!entityAliasId) {
-                continue;
-              }
-              let datasource = thresholdsDatasources.filter((thresholdDatasource) => {
-                return thresholdDatasource.entityAliasId === entityAliasId;
-              })[0];
-              const dataKey: DataKey = {
-                type: DataKeyType.attribute,
-                name: threshold.thresholdAttribute,
-                label: threshold.thresholdAttribute,
-                settings: {
-                  yaxis: series.yaxis,
-                  lineWidth: threshold.lineWidth,
-                  color: threshold.color
-                } as TbFlotThresholdKeySettings,
-                _hash: Math.random()
-              };
-              if (datasource) {
-                datasource.dataKeys.push(dataKey);
-              } else {
-                datasource = {
-                  type: DatasourceType.entity,
-                  name: threshold.thresholdEntityAlias,
-                  aliasName: threshold.thresholdEntityAlias,
-                  entityAliasId,
-                  dataKeys: [dataKey]
+        const lineColor = tinycolor(maxThreshold?.max ? maxThreshold.maxColor : series.dataKey.color);
+        lineColor.setAlpha(.75);
+
+        series.highlightColor = lineColor.toRgbString();
+
+        if (series.datasource.isAdditional) {
+          series.xaxisIndex = 1;
+          series.xaxis = 2;
+        } else {
+          series.xaxisIndex = 0;
+          series.xaxis = 1;
+        }
+
+        if (this.yaxis) {
+          const units = series.dataKey.units && series.dataKey.units.length ? series.dataKey.units : this.trackUnits;
+          let yaxis: TbFlotAxisOptions;
+          if (keySettings.showSeparateAxis) {
+            yaxis = this.createYAxis(keySettings, units);
+            this.yaxes.push(yaxis);
+          } else {
+            yaxis = yaxesMap[units];
+            if (!yaxis) {
+              yaxis = this.createYAxis(keySettings, units);
+              yaxesMap[units] = yaxis;
+              this.yaxes.push(yaxis);
+            }
+          }
+          series.yaxisIndex = this.yaxes.indexOf(yaxis);
+          series.yaxis = series.yaxisIndex + 1;
+          yaxis.keysInfo[i] = {hidden: false};
+          yaxis.show = true;
+
+          if (keySettings.thresholds && keySettings.thresholds.length) {
+            for (const threshold of keySettings.thresholds) {
+              if (threshold.thresholdValueSource === 'predefinedValue' && isFinite(threshold.thresholdValue)) {
+                const colorIndex = this.subscription.data.length + predefinedThresholds.length;
+                this.generateThreshold(predefinedThresholds, series.yaxis, threshold.lineWidth,
+                  threshold.color, colorIndex, threshold.thresholdValue);
+              } else if (threshold.thresholdEntityAlias && threshold.thresholdAttribute) {
+                const entityAliasId = this.ctx.aliasController.getEntityAliasId(threshold.thresholdEntityAlias);
+                if (!entityAliasId) {
+                  continue;
+                }
+                let datasource = thresholdsDatasources.filter((thresholdDatasource) => {
+                  return thresholdDatasource.entityAliasId === entityAliasId;
+                })[0];
+                const dataKey: DataKey = {
+                  type: DataKeyType.attribute,
+                  name: threshold.thresholdAttribute,
+                  label: threshold.thresholdAttribute,
+                  settings: {
+                    yaxis: series.yaxis,
+                    lineWidth: threshold.lineWidth,
+                    color: threshold.color
+                  } as TbFlotThresholdKeySettings,
+                  _hash: Math.random()
                 };
-                thresholdsDatasources.push(datasource);
+                if (datasource) {
+                  datasource.dataKeys.push(dataKey);
+                } else {
+                  datasource = {
+                    type: DatasourceType.entity,
+                    name: threshold.thresholdEntityAlias,
+                    aliasName: threshold.thresholdEntityAlias,
+                    entityAliasId,
+                    dataKeys: [dataKey]
+                  };
+                  thresholdsDatasources.push(datasource);
+                }
               }
             }
           }
         }
-      }
-      if (this.labelPatternsSourcesData?.length) {
-        this.substituteLabelPatterns(series, i);
-      }
-    }
-
-    this.subscribeForThresholdsAttributes(thresholdsDatasources);
-    this.predefinedThresholds = predefinedThresholds;
-
-    this.options.colors = colors;
-    this.options.yaxes = deepClone(this.yaxes);
-    if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
-      if (this.chartType === 'bar') {
-        if (this.subscription.timeWindowConfig.aggregation &&
-          this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
-          this.options.series.bars.barWidth = this.defaultBarWidth;
-        } else {
-          this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+        if (this.labelPatternsSourcesData?.length) {
+          this.substituteLabelPatterns(series, i);
         }
       }
-      this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
-      this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
-      if (this.comparisonEnabled) {
-        this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
-        this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
+
+      this.subscribeForThresholdsAttributes(thresholdsDatasources);
+      this.predefinedThresholds = predefinedThresholds;
+
+      this.options.colors = colors;
+      this.options.yaxes = deepClone(this.yaxes);
+      if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
+        if (this.chartType === 'bar') {
+          if (this.subscription.timeWindowConfig.aggregation &&
+            this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
+            this.options.series.bars.barWidth = this.defaultBarWidth;
+          } else {
+            this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+          }
+        }
+        this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
+        this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
+        if (this.comparisonEnabled) {
+          this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
+          this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
+        }
+        let allThresholds = deepClone(this.predefinedThresholds);
+        if (this.attributesThresholds) {
+          allThresholds = allThresholds.concat(this.attributesThresholds);
+        }
+        this.latestDataThresholds = this.thresholdsSourcesDataUpdated(allThresholds, this.subscription.latestData, true);
+        this.options.grid.markings = allThresholds.concat(this.latestDataThresholds);
       }
-      let allThresholds = deepClone(this.predefinedThresholds);
-      if (this.attributesThresholds) {
-        allThresholds = allThresholds.concat(this.attributesThresholds);
+
+      this.checkMouseEvents();
+
+      if (this.plot) {
+        this.plot.destroy();
       }
-      this.latestDataThresholds = this.thresholdsSourcesDataUpdated(allThresholds, this.subscription.latestData, true);
-      this.options.grid.markings = allThresholds.concat(this.latestDataThresholds);
-    }
+      this.plotInited = true;
 
-    this.checkMouseEvents();
-
-    if (this.plot) {
-      this.plot.destroy();
-    }
-    this.plotInited = true;
-
-    this.createPlot();
+      this.createPlot();
+    });
   }
 
   public update() {
@@ -724,16 +746,33 @@ export class LemFlot {
       const width = this.$element.width();
       const height = this.$element.height();
       if (width && height) {
-        // @ts-ignore
-        this.subscription.data[0].threshold = this.threshold;
-        // @ts-ignore
-        this.subscription.data[1].threshold = this.threshold;
-        // @ts-ignore
+        for (let i = 0; i < this.subscription.data.length; i++) {
+          const thresholdsData = this.ctx.$scope.lemThresholdsMap.find(el => el.id === this.subscription.data[i].datasource.entityId);
+          // @ts-ignore
+          this.subscription.data[i].threshold = this.getThresholds(thresholdsData, this.ctx.$scope.defaultColors[i]);
+        }
         this.plot = $.plot(this.$element, this.subscription.data, this.options) as JQueryPlot;
       } else {
         this.createPlotTimeoutHandle = setTimeout(this.createPlot.bind(this), 30);
       }
     }
+  }
+
+  private getThresholds(data: any, seriesColor: string): Array<any> {
+      const result = [];
+      if (data.min?.key === 'min') {
+      result.push({
+        below: data.min.value,
+        color: data.minColor
+      });
+    }
+    if (data.max?.key === 'max') {
+      result.push({
+        below: data.max.value,
+        color: seriesColor
+      });
+    }
+    return result;
   }
 
   private updateData() {
@@ -1415,7 +1454,8 @@ export class FlotWidgetComponent extends PageComponent implements OnInit {
 
   private widgetConfig: WidgetConfig;
 
-  constructor(protected store: Store<AppState>) {
+  constructor(protected store: Store<AppState>,
+              private attributeService: AttributeService) {
     super(store);
   }
 
@@ -1427,7 +1467,7 @@ export class FlotWidgetComponent extends PageComponent implements OnInit {
     this.ctx.$scope.FlotWidgetComponent = this;
     this.settings = this.ctx.settings;
     this.widgetConfig = this.ctx.widgetConfig;
-    this.ctx.flot = new LemFlot(this.ctx);
+    this.ctx.flot = new LemFlot(this.ctx, this.attributeService);
   }
 }
 
