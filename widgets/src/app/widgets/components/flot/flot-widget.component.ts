@@ -133,13 +133,14 @@ export class LemFlot {
 
   private threshold = [
     {
-      below: 0,
+      below: 22,
       color: "red"
     },
     {
-      below: -100,
+      below: 23,
       color: "brown"
-    }];
+    }
+  ];
 
   constructor(private ctx: WidgetContext, private readonly chartType?: ChartType) {
     this.chartType = this.chartType || 'line';
@@ -725,7 +726,8 @@ export class LemFlot {
       if (width && height) {
         // @ts-ignore
         this.subscription.data[0].threshold = this.threshold;
-
+        // @ts-ignore
+        this.subscription.data[1].threshold = this.threshold;
         // @ts-ignore
         this.plot = $.plot(this.$element, this.subscription.data, this.options) as JQueryPlot;
       } else {
