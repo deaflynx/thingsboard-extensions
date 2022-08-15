@@ -19,7 +19,6 @@ import {
 } from '@core/public-api';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import {
-  AggregationType,
   AttributeScope,
   DataKey,
   DataKeyType,
@@ -31,7 +30,6 @@ import {
   widgetType
 } from '@shared/public-api';
 import {
-  ChartType,
   TbFlotAxisOptions,
   TbFlotHoverInfo,
   TbFlotKeySettings,
@@ -91,8 +89,6 @@ export class LemFlot {
 
   private readonly hideZeros: boolean;
 
-  private readonly defaultBarWidth: number;
-
   private thresholdsSourcesSubscription: IWidgetSubscription;
 
   private predefinedThresholds: TbFlotThresholdMarking[];
@@ -138,9 +134,7 @@ export class LemFlot {
   private readonly showTooltip: boolean;
 
   constructor(private ctx: WidgetContext,
-              private attributeService?: AttributeService,
-              private readonly chartType?: ChartType) {
-    this.chartType = this.chartType || 'line';
+              private attributeService?: AttributeService) {
     this.settings = ctx.settings as TbFlotSettings;
     this.utils = this.ctx.$injector.get(UtilsService);
     this.showTooltip = isDefined(this.settings.showTooltip) ? this.settings.showTooltip : true;
@@ -179,126 +173,102 @@ export class LemFlot {
       }
     };
 
-    if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
-      this.options.xaxes = [];
-      this.xaxis = {
-        mode: 'time',
-        timezone: 'browser',
-        font: deepClone(font),
-        labelFont: deepClone(font)
+    this.options.xaxes = [];
+    this.xaxis = {
+      mode: 'time',
+      timezone: 'browser',
+      font: deepClone(font),
+      labelFont: deepClone(font)
+    };
+    this.yaxis = {
+      font: deepClone(font),
+      labelFont: deepClone(font)
+    };
+    if (this.settings.xaxis) {
+      this.xaxis.font.color = this.settings.xaxis.color || this.xaxis.font.color;
+      this.xaxis.label = this.utils.customTranslation(this.settings.xaxis.title, this.settings.xaxis.title) || null;
+      this.xaxis.labelFont.color = this.xaxis.font.color;
+      this.xaxis.labelFont.size = this.xaxis.font.size + 2;
+      this.xaxis.labelFont.weight = 'bold';
+    }
+
+    this.yAxisTickFormatter = this.formatYAxisTicks.bind(this);
+
+    this.yaxis.tickFormatter = this.yAxisTickFormatter;
+
+    if (this.settings.yaxis) {
+      this.yaxis.font.color = this.settings.yaxis.color || this.yaxis.font.color;
+      this.yaxis.min = isDefined(this.settings.yaxis.min) ? this.settings.yaxis.min : null;
+      this.yaxis.max = isDefined(this.settings.yaxis.max) ? this.settings.yaxis.max : null;
+      this.yaxis.label = this.utils.customTranslation(this.settings.yaxis.title, this.settings.yaxis.title) || null;
+      this.yaxis.labelFont.color = this.yaxis.font.color;
+      this.yaxis.labelFont.size = this.yaxis.font.size + 2;
+      this.yaxis.labelFont.weight = 'bold';
+      if (isNumber(this.settings.yaxis.tickSize)) {
+        this.yaxis.tickSize = this.settings.yaxis.tickSize;
+      } else {
+        this.yaxis.tickSize = null;
+      }
+      if (isNumber(this.settings.yaxis.tickDecimals)) {
+        this.yaxis.tickDecimals = this.settings.yaxis.tickDecimals;
+      } else {
+        this.yaxis.tickDecimals = null;
+      }
+      if (this.settings.yaxis.ticksFormatter && this.settings.yaxis.ticksFormatter.length) {
+        try {
+          this.yaxis.ticksFormatterFunction = new Function('value',
+            this.settings.yaxis.ticksFormatter) as TbFlotTicksFormatterFunction;
+        } catch (e) {
+          this.yaxis.ticksFormatterFunction = null;
+        }
+      }
+    }
+
+    this.options.grid.borderWidth = 1;
+    this.options.grid.color = this.settings.fontColor || '#545454';
+
+    if (this.settings.grid) {
+      this.options.grid.color = this.settings.grid.color || '#545454';
+      this.options.grid.backgroundColor = this.settings.grid.backgroundColor || null;
+      this.options.grid.tickColor = this.settings.grid.tickColor || '#DDDDDD';
+      this.options.grid.borderWidth = isDefined(this.settings.grid.outlineWidth) ?
+        this.settings.grid.outlineWidth : 1;
+      if (this.settings.grid.verticalLines === false) {
+        this.xaxis.tickLength = 0;
+      }
+      if (this.settings.grid.horizontalLines === false) {
+        this.yaxis.tickLength = 0;
+      }
+      if (isDefined(this.settings.grid.margin)) {
+        this.options.grid.margin = this.settings.grid.margin;
+      }
+      if (isDefined(this.settings.grid.minBorderMargin)) {
+        this.options.grid.minBorderMargin = this.settings.grid.minBorderMargin;
+      }
+    }
+
+    this.options.xaxes[0] = deepClone(this.xaxis);
+    if (this.settings.xaxis && this.settings.xaxis.showLabels === false) {
+      this.options.xaxes[0].tickFormatter = () => {
+        return '';
       };
-      this.yaxis = {
-        font: deepClone(font),
-        labelFont: deepClone(font)
+    }
+
+    this.options.series = {};
+
+    this.options.crosshair = {
+      mode: 'x'
+    };
+
+    if (this.settings.smoothLines) {
+      this.options.series.curvedLines = {
+        active: true,
+        monotonicFit: true
       };
-      if (this.settings.xaxis) {
-        this.xaxis.font.color = this.settings.xaxis.color || this.xaxis.font.color;
-        this.xaxis.label = this.utils.customTranslation(this.settings.xaxis.title, this.settings.xaxis.title) || null;
-        this.xaxis.labelFont.color = this.xaxis.font.color;
-        this.xaxis.labelFont.size = this.xaxis.font.size + 2;
-        this.xaxis.labelFont.weight = 'bold';
-      }
+    }
 
-      this.yAxisTickFormatter = this.formatYAxisTicks.bind(this);
-
-      this.yaxis.tickFormatter = this.yAxisTickFormatter;
-
-      if (this.settings.yaxis) {
-        this.yaxis.font.color = this.settings.yaxis.color || this.yaxis.font.color;
-        this.yaxis.min = isDefined(this.settings.yaxis.min) ? this.settings.yaxis.min : null;
-        this.yaxis.max = isDefined(this.settings.yaxis.max) ? this.settings.yaxis.max : null;
-        this.yaxis.label = this.utils.customTranslation(this.settings.yaxis.title, this.settings.yaxis.title) || null;
-        this.yaxis.labelFont.color = this.yaxis.font.color;
-        this.yaxis.labelFont.size = this.yaxis.font.size + 2;
-        this.yaxis.labelFont.weight = 'bold';
-        if (isNumber(this.settings.yaxis.tickSize)) {
-          this.yaxis.tickSize = this.settings.yaxis.tickSize;
-        } else {
-          this.yaxis.tickSize = null;
-        }
-        if (isNumber(this.settings.yaxis.tickDecimals)) {
-          this.yaxis.tickDecimals = this.settings.yaxis.tickDecimals;
-        } else {
-          this.yaxis.tickDecimals = null;
-        }
-        if (this.settings.yaxis.ticksFormatter && this.settings.yaxis.ticksFormatter.length) {
-          try {
-            this.yaxis.ticksFormatterFunction = new Function('value',
-              this.settings.yaxis.ticksFormatter) as TbFlotTicksFormatterFunction;
-          } catch (e) {
-            this.yaxis.ticksFormatterFunction = null;
-          }
-        }
-      }
-
-      this.options.grid.borderWidth = 1;
-      this.options.grid.color = this.settings.fontColor || '#545454';
-
-      if (this.settings.grid) {
-        this.options.grid.color = this.settings.grid.color || '#545454';
-        this.options.grid.backgroundColor = this.settings.grid.backgroundColor || null;
-        this.options.grid.tickColor = this.settings.grid.tickColor || '#DDDDDD';
-        this.options.grid.borderWidth = isDefined(this.settings.grid.outlineWidth) ?
-          this.settings.grid.outlineWidth : 1;
-        if (this.settings.grid.verticalLines === false) {
-          this.xaxis.tickLength = 0;
-        }
-        if (this.settings.grid.horizontalLines === false) {
-          this.yaxis.tickLength = 0;
-        }
-        if (isDefined(this.settings.grid.margin)) {
-          this.options.grid.margin = this.settings.grid.margin;
-        }
-        if (isDefined(this.settings.grid.minBorderMargin)) {
-          this.options.grid.minBorderMargin = this.settings.grid.minBorderMargin;
-        }
-      }
-
-      this.options.xaxes[0] = deepClone(this.xaxis);
-      if (this.settings.xaxis && this.settings.xaxis.showLabels === false) {
-        this.options.xaxes[0].tickFormatter = () => {
-          return '';
-        };
-      }
-
-      this.options.series = {};
-
-      this.options.crosshair = {
-        mode: 'x'
-      };
-
-      if (this.chartType === 'line' && this.settings.smoothLines) {
-        this.options.series.curvedLines = {
-          active: true,
-          monotonicFit: true
-        };
-      }
-
-      if ((this.chartType === 'line' || this.chartType === 'bar') && isFinite(this.settings.thresholdsLineWidth)) {
-        this.options.grid.markingsLineWidth = this.settings.thresholdsLineWidth;
-      }
-
-      if (this.chartType === 'bar') {
-        this.options.series.lines = {
-          show: false,
-          fill: false,
-          steps: false
-        };
-        this.options.series.bars = {
-          show: true,
-          lineWidth: 0,
-          fill: 0.9,
-          align: this.settings.barAlignment || 'left'
-        };
-        this.defaultBarWidth = this.settings.defaultBarWidth || 600;
-      }
-
-      if (this.chartType === 'state') {
-        this.options.series.lines = {
-          steps: true,
-          show: true
-        };
-      }
+    if (isFinite(this.settings.thresholdsLineWidth)) {
+      this.options.grid.markingsLineWidth = this.settings.thresholdsLineWidth;
     }
 
     if (this.ctx.defaultSubscription) {
@@ -362,21 +332,26 @@ export class LemFlot {
     }
 
     let $tasks = [];
+    this.settings.min = 44;
+    this.settings.max = 33;
     this.subscription.data.map(data => {
       const entityId = data.datasource.entity.id;
-      $tasks.push(this.attributeService.getEntityAttributes(entityId, AttributeScope.SERVER_SCOPE, ['min', 'max']).pipe(
-        map(attributes => {
-          const result = {};
-          result['id'] = entityId.id;
-          result['min'] = attributes.find(el => el.key === 'min');
-          result['max'] = attributes.find(el => el.key === 'max');
-          if (data.datasource.latestDataKeys?.length) {
-            result['minColor'] = data.datasource.latestDataKeys.filter(key => key.name === 'min').map(key => key.color)[0];
-            result['maxColor'] = data.datasource.latestDataKeys.filter(key => key.name === 'max').map(key => key.color)[0];
-          }
-          return result;
-        })
-      ));
+      if (data.datasource.type === DatasourceType.entity) {
+        $tasks.push(this.attributeService.getEntityAttributes(entityId, AttributeScope.SERVER_SCOPE,
+          [this.ctx.settings.min, this.ctx.settings.max]).pipe(
+          map(attributes => {
+            const result = {};
+            result['id'] = entityId.id;
+            result['min'] = attributes.find(el => el.key === this.ctx.settings.min);
+            result['max'] = attributes.find(el => el.key === this.ctx.settings.max);
+            if (data.datasource.latestDataKeys?.length) {
+              result['minColor'] = data.datasource.latestDataKeys.filter(key => key.name === this.ctx.settings.min).map(key => key.color)[0];
+              result['maxColor'] = data.datasource.latestDataKeys.filter(key => key.name === this.ctx.settings.max).map(key => key.color)[0];
+            }
+            return result;
+          })
+        ));
+      }
     });
 
     forkJoin($tasks).subscribe(attributes => {
@@ -410,11 +385,8 @@ export class LemFlot {
           series.stack = false;
         }
 
-        if (this.chartType === 'line' || this.chartType === 'state') {
-          series.lines.show = keySettings.showLines !== false;
-        } else {
-          series.lines.show = keySettings.showLines === true;
-        }
+        series.lines.show = keySettings.showLines !== false;
+
         if (isDefined(keySettings.lineWidth) && keySettings.lineWidth !== null) {
           series.lines.lineWidth = keySettings.lineWidth;
         }
@@ -435,7 +407,7 @@ export class LemFlot {
             }
           }
         }
-        if (this.chartType === 'line' && this.settings.smoothLines && !series.points.show) {
+        if (this.settings.smoothLines && !series.points.show) {
           series.curvedLines = {
             apply: true
           };
@@ -524,28 +496,18 @@ export class LemFlot {
 
       this.options.colors = colors;
       this.options.yaxes = deepClone(this.yaxes);
-      if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
-        if (this.chartType === 'bar') {
-          if (this.subscription.timeWindowConfig.aggregation &&
-            this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
-            this.options.series.bars.barWidth = this.defaultBarWidth;
-          } else {
-            this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
-          }
-        }
-        this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
-        this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
-        if (this.comparisonEnabled) {
-          this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
-          this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
-        }
-        let allThresholds = deepClone(this.predefinedThresholds);
-        if (this.attributesThresholds) {
-          allThresholds = allThresholds.concat(this.attributesThresholds);
-        }
-        this.latestDataThresholds = this.thresholdsSourcesDataUpdated(allThresholds, this.subscription.latestData, true);
-        this.options.grid.markings = allThresholds.concat(this.latestDataThresholds);
+      this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
+      this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
+      if (this.comparisonEnabled) {
+        this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
+        this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
       }
+      let allThresholds = deepClone(this.predefinedThresholds);
+      if (this.attributesThresholds) {
+        allThresholds = allThresholds.concat(this.attributesThresholds);
+      }
+      this.latestDataThresholds = this.thresholdsSourcesDataUpdated(allThresholds, this.subscription.latestData, true);
+      this.options.grid.markings = allThresholds.concat(this.latestDataThresholds);
 
       this.checkMouseEvents();
 
@@ -565,83 +527,65 @@ export class LemFlot {
     }
     if (this.subscription) {
       if (!this.isMouseInteraction && this.plot) {
-        if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
-          let axisVisibilityChanged = false;
-          if (this.yaxis) {
-            for (let i = 0; i < this.subscription.data.length; i++) {
-              const series = this.subscription.data[i] as TbFlotSeries;
-              const yaxisIndex = series.yaxisIndex;
-              if (this.yaxes[yaxisIndex].keysInfo[i].hidden !== series.dataKey.hidden) {
-                this.yaxes[yaxisIndex].keysInfo[i].hidden = series.dataKey.hidden;
-                axisVisibilityChanged = true;
-              }
-
-              if (this.labelPatternsSourcesData?.length) {
-                this.substituteLabelPatterns(series, i);
-              }
+        let axisVisibilityChanged = false;
+        if (this.yaxis) {
+          for (let i = 0; i < this.subscription.data.length; i++) {
+            const series = this.subscription.data[i] as TbFlotSeries;
+            const yaxisIndex = series.yaxisIndex;
+            if (this.yaxes[yaxisIndex].keysInfo[i].hidden !== series.dataKey.hidden) {
+              this.yaxes[yaxisIndex].keysInfo[i].hidden = series.dataKey.hidden;
+              axisVisibilityChanged = true;
             }
-            if (axisVisibilityChanged) {
-              this.options.yaxes.length = 0;
-              this.yaxes.forEach((yaxis) => {
-                let hidden = true;
-                yaxis.keysInfo.forEach((info) => {
-                  if (info) {
-                    hidden = hidden && info.hidden;
-                  }
-                });
-                yaxis.hidden = hidden;
-                let newIndex = 1;
-                if (!yaxis.hidden) {
-                  this.options.yaxes.push(yaxis);
-                  newIndex = this.options.yaxes.length;
-                }
-                for (let k = 0; k < yaxis.keysInfo.length; k++) {
-                  if (yaxis.keysInfo[k]) {
-                    (this.subscription.data[k] as TbFlotSeries).yaxis = newIndex;
-                  }
-                }
 
-              });
-              this.options.yaxis = {
-                show: this.options.yaxes.length ? true : false
-              };
+            if (this.labelPatternsSourcesData?.length) {
+              this.substituteLabelPatterns(series, i);
             }
           }
-
-          this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
-          this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
-          if (this.comparisonEnabled) {
-            this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
-            this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
-          }
-          if (this.chartType === 'bar') {
-            if (this.subscription.timeWindowConfig.aggregation &&
-              this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
-              this.options.series.bars.barWidth = this.defaultBarWidth;
-            } else {
-              this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
-            }
-          }
-
           if (axisVisibilityChanged) {
-            this.redrawPlot();
-          } else {
-            this.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
-            this.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
-            if (this.comparisonEnabled) {
-              this.plot.getOptions().xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
-              this.plot.getOptions().xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
-            }
-            if (this.chartType === 'bar') {
-              if (this.subscription.timeWindowConfig.aggregation &&
-                this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
-                this.plot.getOptions().series.bars.barWidth = this.defaultBarWidth;
-              } else {
-                this.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+            this.options.yaxes.length = 0;
+            this.yaxes.forEach((yaxis) => {
+              let hidden = true;
+              yaxis.keysInfo.forEach((info) => {
+                if (info) {
+                  hidden = hidden && info.hidden;
+                }
+              });
+              yaxis.hidden = hidden;
+              let newIndex = 1;
+              if (!yaxis.hidden) {
+                this.options.yaxes.push(yaxis);
+                newIndex = this.options.yaxes.length;
               }
-            }
-            this.updateData();
+              for (let k = 0; k < yaxis.keysInfo.length; k++) {
+                if (yaxis.keysInfo[k]) {
+                  (this.subscription.data[k] as TbFlotSeries).yaxis = newIndex;
+                }
+              }
+
+            });
+            this.options.yaxis = {
+              show: this.options.yaxes.length ? true : false
+            };
           }
+        }
+
+        this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
+        this.options.xaxes[0].max = this.subscription.timeWindow.maxTime;
+        if (this.comparisonEnabled) {
+          this.options.xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
+          this.options.xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
+        }
+
+        if (axisVisibilityChanged) {
+          this.redrawPlot();
+        } else {
+          this.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
+          this.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
+          if (this.comparisonEnabled) {
+            this.plot.getOptions().xaxes[1].min = this.subscription.comparisonTimeWindow.minTime;
+            this.plot.getOptions().xaxes[1].max = this.subscription.comparisonTimeWindow.maxTime;
+          }
+          this.updateData();
         }
       } else if (this.isMouseInteraction && this.plot) {
         this.updateTimeoutHandle = setTimeout(this.update.bind(this), 30);
@@ -656,17 +600,15 @@ export class LemFlot {
     }
     if (this.subscription) {
       if (!this.isMouseInteraction && this.plot) {
-        if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
-          let allThresholds = deepClone(this.predefinedThresholds);
-          if (this.attributesThresholds) {
-            allThresholds = allThresholds.concat(this.attributesThresholds);
-          }
-          this.latestDataThresholds = this.thresholdsSourcesDataUpdated(allThresholds, this.subscription.latestData, true);
-          this.options.grid.markings = allThresholds.concat(this.latestDataThresholds);
-          if (this.plot) {
-            this.plot.getOptions().grid.markings = this.options.grid.markings;
-            this.updateData();
-          }
+        let allThresholds = deepClone(this.predefinedThresholds);
+        if (this.attributesThresholds) {
+          allThresholds = allThresholds.concat(this.attributesThresholds);
+        }
+        this.latestDataThresholds = this.thresholdsSourcesDataUpdated(allThresholds, this.subscription.latestData, true);
+        this.options.grid.markings = allThresholds.concat(this.latestDataThresholds);
+        if (this.plot) {
+          this.plot.getOptions().grid.markings = this.options.grid.markings;
+          this.updateData();
         }
       } else if (this.isMouseInteraction && this.plot) {
         this.latestUpdateTimeoutHandle = setTimeout(this.latestDataUpdate.bind(this), 30);
@@ -1331,13 +1273,6 @@ export class LemFlot {
       results.push({
         seriesHover: []
       });
-    }
-    if (this.chartType === 'bar' && this.options.series.bars.align !== 'left') {
-      if (this.options.series.bars.align === 'center') {
-        deltaX = this.options.series.bars.barWidth / 2;
-      } else {
-        deltaX = this.options.series.bars.barWidth;
-      }
     }
     for (i = 0; i < seriesList.length; i++) {
       series = seriesList[i];
