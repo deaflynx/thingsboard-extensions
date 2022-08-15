@@ -334,17 +334,19 @@ export class LemFlot {
     let $tasks = [];
     this.subscription.data.map(data => {
       const entityId = data.datasource.entity.id;
+      const minAttributeKey = this.ctx.settings.min || 'min';
+      const maxAttributeKey = this.ctx.settings.max || 'max';
       if (data.datasource.type === DatasourceType.entity) {
         $tasks.push(this.attributeService.getEntityAttributes(entityId, AttributeScope.SERVER_SCOPE,
-          [this.ctx.settings.min, this.ctx.settings.max]).pipe(
+          [minAttributeKey, maxAttributeKey]).pipe(
           map(attributes => {
             const result = {};
             result['id'] = entityId.id;
-            result['min'] = attributes.find(el => el.key === this.ctx.settings.min);
-            result['max'] = attributes.find(el => el.key === this.ctx.settings.max);
+            result['min'] = attributes.find(el => el.key === minAttributeKey);
+            result['max'] = attributes.find(el => el.key === maxAttributeKey);
             if (data.datasource.latestDataKeys?.length) {
-              result['minColor'] = data.datasource.latestDataKeys.filter(key => key.name === this.ctx.settings.min).map(key => key.color)[0];
-              result['maxColor'] = data.datasource.latestDataKeys.filter(key => key.name === this.ctx.settings.max).map(key => key.color)[0];
+              result['minColor'] = data.datasource.latestDataKeys.filter(key => key.name === minAttributeKey).map(key => key.color)[0];
+              result['maxColor'] = data.datasource.latestDataKeys.filter(key => key.name === maxAttributeKey).map(key => key.color)[0];
             }
             return result;
           })
