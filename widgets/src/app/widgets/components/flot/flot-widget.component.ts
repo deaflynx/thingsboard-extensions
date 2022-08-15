@@ -370,8 +370,10 @@ export class LemFlot {
           result['id'] = entityId.id;
           result['min'] = attributes.find(el => el.key === 'min');
           result['max'] = attributes.find(el => el.key === 'max');
-          result['minColor'] = data.datasource.latestDataKeys.filter(key => key.name === 'min').map(key => key.color)[0];
-          result['maxColor'] = data.datasource.latestDataKeys.filter(key => key.name === 'max').map(key => key.color)[0];
+          if (data.datasource.latestDataKeys?.length) {
+            result['minColor'] = data.datasource.latestDataKeys.filter(key => key.name === 'min').map(key => key.color)[0];
+            result['maxColor'] = data.datasource.latestDataKeys.filter(key => key.name === 'max').map(key => key.color)[0];
+          }
           return result;
         })
       ));
@@ -387,7 +389,7 @@ export class LemFlot {
         const maxThreshold = this.ctx.$scope.lemThresholdsMap.filter(el => el.id === series.datasource.entityId)[0];
         // @ts-ignore
         this.ctx.$scope.defaultColors.push(series.dataKey.color);
-        colors.push(maxThreshold?.max ? maxThreshold.maxColor : series.dataKey.color);
+        colors.push((maxThreshold?.max && maxThreshold?.maxColor) ? maxThreshold.maxColor : series.dataKey.color);
         const keySettings = series.dataKey.settings;
         series.dataKey.tooltipValueFormatFunction = tooltipValueFormatFunction;
         if (keySettings.tooltipValueFormatter && keySettings.tooltipValueFormatter.length) {
@@ -763,7 +765,7 @@ export class LemFlot {
       if (data.min?.key === 'min') {
       result.push({
         below: data.min.value,
-        color: data.minColor
+        color: data.minColor || seriesColor
       });
     }
     if (data.max?.key === 'max') {
