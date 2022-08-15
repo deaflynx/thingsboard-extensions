@@ -332,8 +332,6 @@ export class LemFlot {
     }
 
     let $tasks = [];
-    this.settings.min = 44;
-    this.settings.max = 33;
     this.subscription.data.map(data => {
       const entityId = data.datasource.entity.id;
       if (data.datasource.type === DatasourceType.entity) {
