@@ -6,12 +6,12 @@
 /// <reference path="./jquery.flot.typings.d.ts" />
 
 import { DataKey, Datasource, DatasourceData } from '@shared/public-api';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { DataKeyType } from '@shared/public-api';
 import { ComparisonDuration } from '@shared/public-api';
 
 export declare type ChartType = 'line' | 'pie' | 'bar' | 'state' | 'graph';
 
-export declare type TbFlotSettings = TbFlotBaseSettings & TbFlotGraphSettings & TbFlotBarSettings & TbFlotPieSettings;
+export declare type TbFlotSettings = LemFlotThresholds & TbFlotBaseSettings & TbFlotGraphSettings & TbFlotBarSettings & TbFlotPieSettings;
 
 export declare type TooltipValueFormatFunction = (value: any) => string;
 
@@ -112,6 +112,11 @@ export interface TbFlotYAxisSettings {
   ticksFormatter: string;
   tickDecimals: number;
   tickSize: number;
+}
+
+export interface LemFlotThresholds {
+  min: string;
+  max: string;
 }
 
 export interface TbFlotBaseSettings {
