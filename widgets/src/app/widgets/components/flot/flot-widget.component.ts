@@ -706,13 +706,13 @@ export class LemFlot {
       const result = [];
       if (data.min?.key === 'min') {
       result.push({
-        below: data.min.value,
+        below: data.min.value + 0.0000001,
         color: data.minColor || seriesColor
       });
     }
     if (data.max?.key === 'max') {
       result.push({
-        below: data.max.value,
+        below: data.max.value - 0.0000001,
         color: seriesColor
       });
     }
