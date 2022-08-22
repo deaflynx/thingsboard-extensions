@@ -331,6 +331,7 @@ export class LemFlot {
       }
     }
 
+    // Get threshold data and colors manipulations
     let $tasks = [];
     this.subscription.data.map(data => {
       const entityId = data.datasource.entity.id;
@@ -340,29 +341,26 @@ export class LemFlot {
         $tasks.push(this.attributeService.getEntityAttributes(entityId, AttributeScope.SERVER_SCOPE,
           [minAttributeKey, maxAttributeKey]).pipe(
           map(attributes => {
-            const result = {};
-            result['id'] = entityId.id;
-            result['min'] = attributes.find(el => el.key === minAttributeKey);
-            result['max'] = attributes.find(el => el.key === maxAttributeKey);
+            const result: any = {};
+            result.id = entityId.id;
+            result.min = attributes.find(el => el.key === minAttributeKey);
+            result.max = attributes.find(el => el.key === maxAttributeKey);
             if (data.datasource.latestDataKeys?.length) {
-              result['minColor'] = data.datasource.latestDataKeys.filter(key => key.name === minAttributeKey).map(key => key.color)[0];
-              result['maxColor'] = data.datasource.latestDataKeys.filter(key => key.name === maxAttributeKey).map(key => key.color)[0];
+              result.minColor = data.datasource.latestDataKeys.filter(key => key.name === minAttributeKey).map(key => key.color)[0];
+              result.maxColor = data.datasource.latestDataKeys.filter(key => key.name === maxAttributeKey).map(key => key.color)[0];
             }
             return result;
           })
         ));
       }
     });
-
     forkJoin($tasks).subscribe(attributes => {
       this.ctx.$scope.lemThresholdsMap = attributes;
       this.ctx.$scope.defaultColors = [];
 
       for (let i = 0; i < this.subscription.data.length; i++) {
         const series = this.subscription.data[i] as TbFlotSeries;
-        // @ts-ignore
         const maxThreshold = this.ctx.$scope.lemThresholdsMap.filter(el => el.id === series.datasource.entityId)[0];
-        // @ts-ignore
         this.ctx.$scope.defaultColors.push(series.dataKey.color);
         colors.push((maxThreshold?.max && maxThreshold?.maxColor) ? maxThreshold.maxColor : series.dataKey.color);
         const keySettings = series.dataKey.settings;
@@ -704,13 +702,13 @@ export class LemFlot {
 
   private getThresholds(data: any, seriesColor: string): Array<any> {
       const result = [];
-      if (data.min?.key === 'min') {
+      if (data.min?.key) {
       result.push({
         below: data.min.value + 0.0000001,
         color: data.minColor || seriesColor
       });
     }
-    if (data.max?.key === 'max') {
+    if (data.max?.key) {
       result.push({
         below: data.max.value - 0.0000001,
         color: seriesColor
