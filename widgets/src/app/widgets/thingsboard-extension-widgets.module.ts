@@ -8,14 +8,14 @@ import { TranslateService } from '@ngx-translate/core';
 import addCustomWidgetLocale from './locale/custom-widget-locale.constant';
 import { SharedModule } from '@shared/public-api';
 import { HomeComponentsModule } from '@home/components/public-api';
-import { FlotWidgetComponent } from './components/lem-threshold-flot/flot-widget.component';
+import { LemFlotWidgetComponent } from './components/lem-threshold-flot/lem-flot-widget.component';
 import { LemFlotLineWidgetSettingsComponent } from './components/lem-threshold-flot/lem-flot-line-widget-settings.component';
 import { LemFlotWidgetSettingsComponent } from './components/lem-threshold-flot/lem-flot-widget-settings.component';
 import { LemLabelDataKeyComponent } from './components/lem-threshold-flot/lem-label-data-key.component';
 
 @NgModule({
   declarations: [
-    FlotWidgetComponent,
+    LemFlotWidgetComponent,
     LemFlotLineWidgetSettingsComponent,
     LemFlotWidgetSettingsComponent,
     LemLabelDataKeyComponent
@@ -26,7 +26,7 @@ import { LemLabelDataKeyComponent } from './components/lem-threshold-flot/lem-la
     SharedModule
   ],
   exports: [
-    FlotWidgetComponent,
+    LemFlotWidgetComponent,
     LemFlotLineWidgetSettingsComponent,
     LemFlotWidgetSettingsComponent,
     LemLabelDataKeyComponent

@@ -58,7 +58,7 @@ import { Router } from '@angular/router';
 import * as RxJS from 'rxjs';
 import * as RxJSOperators from 'rxjs/operators';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { LemFlot } from './flot-widget.component';
+import { LemFlot } from './lem-flot-widget.component';
 
 export declare type NotificationType = 'info' | 'warn' | 'success' | 'error';
 export declare type NotificationHorizontalPosition = 'start' | 'center' | 'end' | 'left' | 'right';

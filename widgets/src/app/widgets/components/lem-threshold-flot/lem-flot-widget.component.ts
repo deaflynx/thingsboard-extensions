@@ -44,7 +44,7 @@ import {
   TbFlotThresholdMarking,
   TbFlotTicksFormatterFunction,
   TooltipValueFormatFunction
-} from './flot-widget.models';
+} from './lem-flot-widget.models';
 import { Component, Input, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { forkJoin } from 'rxjs';
@@ -1377,11 +1377,11 @@ export class LemFlot {
 }
 
 @Component({
-  selector: 'flot-widget',
-  templateUrl: './flot-widget.component.html',
-  styleUrls: ['./flot-widget.component.scss']
+  selector: 'thresholds-lem-flot-widget',
+  templateUrl: './lem-flot-widget.component.html',
+  styleUrls: ['./lem-flot-widget.component.scss']
 })
-export class FlotWidgetComponent extends PageComponent implements OnInit {
+export class LemFlotWidgetComponent extends PageComponent implements OnInit {
 
   @Input() ctx: WidgetContext;
 
