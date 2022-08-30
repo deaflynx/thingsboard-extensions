@@ -1,0 +1,42 @@
+<!--
+
+    Copyright © 2022 ThingsBoard, Inc.
+
+-->
+
+
+<section [formGroup]="alarmScheduleForm" fxLayout="column">
+  <div fxLayout="row" fxLayoutAlign="space-between center" >
+    <mat-label>Day</mat-label>
+    <mat-label>Open Time</mat-label>
+    <mat-label>Open Flow</mat-label>
+    <mat-label>Close Time</mat-label>
+    <mat-label>Close Flow</mat-label>
+  </div>
+
+  <div *ngFor="let day of allDays" fxLayout="column" formArrayName="items" fxLayoutGap="1em">
+    <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" [formGroupName]="''+day" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
+      <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, day)" >
+        {{ dayOfWeekTranslationsArray[day] | translate | titlecase }}
+      </mat-checkbox>
+      <div fxLayout="row" fxLayoutGap="8px" fxFlex>
+        <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+          <input required matInput formControlName="openTime" type="time" min="00:00" max="24:00">
+        </mat-form-field>
+        <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+          <mat-select formControlName="openFlow">
+            <mat-option *ngFor="let value of percentages" [value]="value">{{value}}%</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+          <input required matInput formControlName="closeTime" type="time" min="00:00" max="24:00">
+        </mat-form-field>
+        <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+          <mat-select formControlName="closeFlow">
+            <mat-option *ngFor="let value of percentages" [value]="value">{{value}}%</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+</section>
