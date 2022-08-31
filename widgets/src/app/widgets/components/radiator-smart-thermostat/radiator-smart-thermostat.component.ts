@@ -5,10 +5,18 @@
 import { AfterViewInit, Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AttributeService, DeviceService } from '@core/public-api';
-import { AttributeData, AttributeScope, Device, EntityType } from '@shared/public-api';
+import { AppState, AttributeService, DeviceService, RuleEngineService } from '@core/public-api';
+import { AttributeData, AttributeScope, Device, PageComponent } from '@shared/public-api';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngrx/store';
+
+interface RadiatorSmartThermostatData {
+  openTime: string,
+  openFlow: number | string,
+  closeTime: string,
+  closeFlow: number | string,
+}
 
 @Component({
   selector: 'radiator-smart-thermostat',
@@ -18,13 +26,13 @@ import { TranslateService } from '@ngx-translate/core';
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class RadiatorSmartThermostatComponent implements OnInit, AfterViewInit {
+export class RadiatorSmartThermostatComponent extends PageComponent implements OnInit, AfterViewInit {
 
   @Input() ctx: WidgetContext;
 
   device: Device;
 
-  formGroup: FormGroup;
+  form: FormGroup;
 
   allDaysIndex = Array(7).fill(0).map((x, i) => i);
 
@@ -42,18 +50,26 @@ export class RadiatorSmartThermostatComponent implements OnInit, AfterViewInit {
     'device-profile.schedule-day.sunday'
   );
 
+  private initConfigAttributes: any;
+
   private thermostatConfigAttributes = 'radiatorSmartThermostatConfig';
 
   private templateConfigAttributes = 'template_radiatorSmartThermostatConfig';
 
+  private emptyValue = 'N/A';
+
   get itemsSchedulerForm(): FormArray {
-    return this.formGroup.get('items') as FormArray;
+    return this.form.get('items') as FormArray;
   }
 
-  constructor(private fb: FormBuilder,
+  constructor(protected store: Store<AppState>,
+              private fb: FormBuilder,
               private attributeService: AttributeService,
               private deviceService: DeviceService,
-              private translate: TranslateService) { }
+              private ruleEngineService: RuleEngineService,
+              private translate: TranslateService) {
+    super(store);
+  }
 
   ngOnInit() {
     this.getDaysOfTheWeek();
@@ -65,7 +81,7 @@ export class RadiatorSmartThermostatComponent implements OnInit, AfterViewInit {
   }
 
   private buildForm() {
-    this.formGroup = this.fb.group({
+    this.form = this.fb.group({
       items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)))
     });
   }
@@ -106,6 +122,7 @@ export class RadiatorSmartThermostatComponent implements OnInit, AfterViewInit {
   }
 
   private patchValues(attributes: AttributeData) {
+    this.initConfigAttributes = attributes;
     for (let key in attributes) {
       let index = this.allDaysValue.indexOf(key);
       if (index > -1) {
@@ -151,5 +168,55 @@ export class RadiatorSmartThermostatComponent implements OnInit, AfterViewInit {
     this.itemsSchedulerForm.at(index).get('closeFlow').enable({emitEvent});
   }
 
+  save() {
+    const [deviceAttributesData, ruleEngineRequestData] = [...this.prepareData()];
+    this.attributeService.saveEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, deviceAttributesData).subscribe();
+    // this.ruleEngineService.makeRequestToRuleEngine(ruleEngineRequestData).subscribe();
+  }
+
+  private prepareData(): Array<Array<AttributeData> | any> {
+    const key = this.thermostatConfigAttributes;
+    const formValues = this.form.get('items').value;
+    const deviceAttributesValue = {};
+    const ruleEngineRequestData = {};
+
+    formValues.map(value => {
+      let key = value.dayOfWeek;
+      let newValue: RadiatorSmartThermostatData | string;
+      if (value.openTime) {
+        newValue = {
+          openTime: value.openTime,
+          closeTime: value.closeTime,
+          openFlow: value.openFlow,
+          closeFlow: value.closeFlow
+        }
+      } else {
+        newValue = this.emptyValue;
+      }
+
+      deviceAttributesValue[key] = newValue;
+
+      let newValueStringify = JSON.stringify(this.orderKeys(newValue));
+      let initValueStringify = JSON.stringify(this.orderKeys(this.initConfigAttributes[key]));
+      if (newValueStringify !== initValueStringify) {
+        ruleEngineRequestData[key] = newValue;
+      }
+    });
+    const deviceAttributesData: Array<AttributeData> = [{
+      key,
+      value: deviceAttributesValue
+    }];
+    return [deviceAttributesData, ruleEngineRequestData];
+  }
+
+  private orderKeys(object): any {
+    return Object.keys(object).sort().reduce(
+      (obj, key) => {
+        obj[key] = object[key];
+        return obj;
+      },
+      {}
+    );
+  }
 
 }

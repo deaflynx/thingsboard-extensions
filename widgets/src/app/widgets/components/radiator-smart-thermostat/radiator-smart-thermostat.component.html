@@ -5,7 +5,7 @@
 -->
 
 
-<section [formGroup]="formGroup" fxLayout="column">
+<form [formGroup]="form" fxLayout="column" (ngSubmit)="save()">
   <div fxLayout="row" fxLayoutAlign="space-between center" >
     <mat-label>Day</mat-label>
     <mat-label>Open Time</mat-label>
@@ -39,4 +39,11 @@
       </div>
     </div>
   </div>
-</section>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || form.invalid || !form.dirty">
+      {{ 'action.save' | translate }}
+    </button>
+  </div>
+</form>
