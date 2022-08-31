@@ -10,6 +10,7 @@ import { AttributeData, AttributeScope, Device, PageComponent } from '@shared/pu
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
+import { HttpClient } from '@angular/common/http';
 
 interface RadiatorSmartThermostatData {
   openTime: string,
@@ -67,7 +68,8 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
               private attributeService: AttributeService,
               private deviceService: DeviceService,
               private ruleEngineService: RuleEngineService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private http: HttpClient) {
     super(store);
   }
 
@@ -168,7 +170,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     this.form.markAsPristine();
     const [deviceAttributesData, ruleEngineRequestData] = [...this.prepareData()];
     this.attributeService.saveEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, deviceAttributesData).subscribe();
-    // this.ruleEngineService.makeRequestToRuleEngine(ruleEngineRequestData).subscribe();
+    this.ruleEngineService.makeRequestToRuleEngineFromEntity(this.device.id, ruleEngineRequestData).subscribe();
   }
 
   private prepareData(): Array<Array<AttributeData> | any> {
@@ -203,7 +205,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
       key,
       value: deviceAttributesValue
     }];
-    return [deviceAttributesData, ruleEngineRequestData];
+    return [deviceAttributesData, {deltaRadiatorSmartThermostatConfig: ruleEngineRequestData}];
   }
 
   private orderKeys(object): any {
