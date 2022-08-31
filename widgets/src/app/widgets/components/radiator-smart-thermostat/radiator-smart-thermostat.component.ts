@@ -38,7 +38,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   allDaysValue: Array<string>;
 
-  percentages = Array(101).fill(0).map((x, i) => i);
+  percentages = [0, 100];
 
   dayOfWeekTranslationsArray = new Array<string> (
     'device-profile.schedule-day.monday',
@@ -101,12 +101,8 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     const entityId = this.ctx.stateController.getStateParams().entityId;
     this.deviceService.getDevice(entityId.id).subscribe(device => {
       this.device = device;
-      this.getAttributes();
+      this.getThermostatAttributes();
     });
-  }
-
-  private getAttributes() {
-    this.getThermostatAttributes();
   }
 
   private getThermostatAttributes() {
