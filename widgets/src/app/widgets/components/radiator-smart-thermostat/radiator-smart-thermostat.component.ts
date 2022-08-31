@@ -2,11 +2,13 @@
 /// Copyright © 2022 ThingsBoard, Inc.
 ///
 
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AttributeService } from '@core/public-api';
-import { AttributeData, AttributeScope, EntityType } from '@shared/public-api';
+import { AttributeService, DeviceService } from '@core/public-api';
+import { AttributeData, AttributeScope, Device, EntityType } from '@shared/public-api';
+import { WidgetContext } from '@home/models/widget-component.models';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'radiator-smart-thermostat',
@@ -16,15 +18,21 @@ import { AttributeData, AttributeScope, EntityType } from '@shared/public-api';
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class RadiatorSmartThermostatComponent implements OnInit {
+export class RadiatorSmartThermostatComponent implements OnInit, AfterViewInit {
 
-  @Input() ctx: any;
+  @Input() ctx: WidgetContext;
 
-  @Input() stateParams: any;
+  device: Device;
 
-  alarmScheduleForm: FormGroup;
+  formGroup: FormGroup;
 
-  dayOfWeekTranslationsArray = new Array<string>(
+  allDaysIndex = Array(7).fill(0).map((x, i) => i);
+
+  allDaysValue: Array<string>;
+
+  percentages = Array(101).fill(0).map((x, i) => i);
+
+  dayOfWeekTranslationsArray = new Array<string> (
     'device-profile.schedule-day.monday',
     'device-profile.schedule-day.tuesday',
     'device-profile.schedule-day.wednesday',
@@ -34,31 +42,30 @@ export class RadiatorSmartThermostatComponent implements OnInit {
     'device-profile.schedule-day.sunday'
   );
 
-  allDays = Array(7).fill(0).map((x, i) => i);
+  private thermostatConfigAttributes = 'radiatorSmartThermostatConfig';
 
-  days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-
-  percentages = Array(101).fill(0).map((x, i) => i);
+  private templateConfigAttributes = 'template_radiatorSmartThermostatConfig';
 
   get itemsSchedulerForm(): FormArray {
-    return this.alarmScheduleForm.get('items') as FormArray;
+    return this.formGroup.get('items') as FormArray;
   }
 
   constructor(private fb: FormBuilder,
-              private attributeService: AttributeService) { }
+              private attributeService: AttributeService,
+              private deviceService: DeviceService,
+              private translate: TranslateService) { }
 
   ngOnInit() {
+    this.getDaysOfTheWeek();
     this.buildForm();
-    this.getAttributes();
   }
 
-  changeCustomScheduler($event: MatCheckboxChange, index: number) {
-    const value = $event.checked;
-    this.disabledSelectedTime(value, index, true);
+  private getDaysOfTheWeek() {
+    this.allDaysValue = this.dayOfWeekTranslationsArray.map(value => this.translate.instant(value).toLowerCase());
   }
 
   private buildForm() {
-    this.alarmScheduleForm = this.fb.group({
+    this.formGroup = this.fb.group({
       items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)))
     });
   }
@@ -66,7 +73,7 @@ export class RadiatorSmartThermostatComponent implements OnInit {
   private defaultItemsScheduler(index): FormGroup {
     return this.fb.group({
       enabled: [true],
-      dayOfWeek: [this.days[index]],
+      dayOfWeek: [this.allDaysValue[index]],
       openTime: [0, Validators.required],
       closeTime: [0, Validators.required],
       openFlow: [100, [Validators.required]],
@@ -74,12 +81,12 @@ export class RadiatorSmartThermostatComponent implements OnInit {
     });
   }
 
-  private disabledSelectedTime(enable: boolean, index: number, emitEvent = false) {
-    if (enable) {
-      this.enableItems(index);
-    } else {
-      this.disableItems(index);
-    }
+  ngAfterViewInit() {
+    const entityId = this.ctx.stateController.getStateParams().entityId;
+    this.deviceService.getDevice(entityId.id).subscribe(device => {
+      this.device = device;
+      this.getAttributes();
+    });
   }
 
   private getAttributes() {
@@ -87,20 +94,20 @@ export class RadiatorSmartThermostatComponent implements OnInit {
   }
 
   private getThermostatAttributes() {
-    this.attributeService.getEntityAttributes({id: '42e154f0-214f-11ed-bd85-b918a967bfdf', entityType: EntityType.DEVICE}, AttributeScope.SERVER_SCOPE, ['radiatorSmartThermostatConfig']).subscribe(
-      attributes => attributes.length ? this.patchValues(attributes[0].value) : this.getCustomerAttributes()
+    this.attributeService.getEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, [this.thermostatConfigAttributes]).subscribe(
+      attributes => attributes.length ? this.patchValues(attributes[0].value) : this.getOwnerAttributes()
     );
   }
 
-  private getCustomerAttributes() {
-    this.attributeService.getEntityAttributes({id: '42e154f0-214f-11ed-bd85-b918a967bfdf', entityType: EntityType.CUSTOMER}, AttributeScope.SERVER_SCOPE, ['template_radiatorSmartThermostatConfig']).subscribe(
-      attributes => attributes.length ? this.patchValues(attributes[0].value) : console.error('Customer attributes template_radiatorSmartThermostatConfig not found')
+  private getOwnerAttributes() {
+    this.attributeService.getEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templateConfigAttributes]).subscribe(
+      attributes => { if (attributes.length) this.patchValues(attributes[0].value); }
     );
   }
 
   private patchValues(attributes: AttributeData) {
     for (let key in attributes) {
-      let index = this.days.indexOf(key);
+      let index = this.allDaysValue.indexOf(key);
       if (index > -1) {
         const data = Object.assign({}, attributes[key]);
         if (data?.openTime) {
@@ -114,6 +121,19 @@ export class RadiatorSmartThermostatComponent implements OnInit {
           this.disableItems(index);
         }
       }
+    }
+  }
+
+  changeCustomScheduler($event: MatCheckboxChange, index: number) {
+    const value = $event.checked;
+    this.disabledSelectedTime(value, index, true);
+  }
+
+  private disabledSelectedTime(enable: boolean, index: number, emitEvent = false) {
+    if (enable) {
+      this.enableItems(index);
+    } else {
+      this.disableItems(index);
     }
   }
 

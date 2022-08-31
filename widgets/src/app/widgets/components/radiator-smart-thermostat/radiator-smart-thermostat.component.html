@@ -5,7 +5,7 @@
 -->
 
 
-<section [formGroup]="alarmScheduleForm" fxLayout="column">
+<section [formGroup]="formGroup" fxLayout="column">
   <div fxLayout="row" fxLayoutAlign="space-between center" >
     <mat-label>Day</mat-label>
     <mat-label>Open Time</mat-label>
@@ -14,7 +14,7 @@
     <mat-label>Close Flow</mat-label>
   </div>
 
-  <div *ngFor="let day of allDays" fxLayout="column" formArrayName="items" fxLayoutGap="1em">
+  <div *ngFor="let day of allDaysIndex" fxLayout="column" formArrayName="items" fxLayoutGap="1em">
     <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" [formGroupName]="''+day" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
       <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, day)" >
         {{ dayOfWeekTranslationsArray[day] | translate | titlecase }}
