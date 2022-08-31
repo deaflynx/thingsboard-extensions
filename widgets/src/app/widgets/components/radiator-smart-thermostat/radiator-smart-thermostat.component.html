@@ -24,7 +24,7 @@
           <input required matInput formControlName="openTime" type="time" min="00:00" max="24:00">
         </mat-form-field>
         <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
-          <mat-select formControlName="openFlow">
+          <mat-select formControlName="openFlow" required>
             <mat-option *ngFor="let value of percentages" [value]="value">{{value}}%</mat-option>
           </mat-select>
         </mat-form-field>
@@ -32,7 +32,7 @@
           <input required matInput formControlName="closeTime" type="time" min="00:00" max="24:00">
         </mat-form-field>
         <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
-          <mat-select formControlName="closeFlow">
+          <mat-select formControlName="closeFlow" required>
             <mat-option *ngFor="let value of percentages" [value]="value">{{value}}%</mat-option>
           </mat-select>
         </mat-form-field>

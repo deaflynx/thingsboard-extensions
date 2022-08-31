@@ -90,10 +90,10 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     return this.fb.group({
       enabled: [true],
       dayOfWeek: [this.allDaysValue[index]],
-      openTime: [0, Validators.required],
-      closeTime: [0, Validators.required],
-      openFlow: [100, [Validators.required]],
-      closeFlow: [0, [Validators.required]]
+      openTime: [null, Validators.required],
+      closeTime: [null, Validators.required],
+      openFlow: [null, [Validators.required]],
+      closeFlow: [null, [Validators.required]]
     });
   }
 
@@ -169,6 +169,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   }
 
   save() {
+    this.form.markAsPristine();
     const [deviceAttributesData, ruleEngineRequestData] = [...this.prepareData()];
     this.attributeService.saveEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, deviceAttributesData).subscribe();
     // this.ruleEngineService.makeRequestToRuleEngine(ruleEngineRequestData).subscribe();
