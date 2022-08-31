@@ -1,0 +1,47 @@
+<!--
+
+    Copyright © 2021 ThingsBoard, Inc.
+
+-->
+<form [formGroup]="form" fxLayout="column" (ngSubmit)="save()">
+  <div fxLayout="column">
+    <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="space-between center" fxLayoutAlign.xs="center start">
+      <mat-label class="cell-header" fxFlex="20">Day</mat-label>
+      <mat-label class="cell-header" fxFlex="20">Open Time</mat-label>
+      <mat-label class="cell-header" fxFlex="20">Open Flow</mat-label>
+      <mat-label class="cell-header" fxFlex="20">Close Time</mat-label>
+      <mat-label class="cell-header" fxFlex="20">Close Flow</mat-label>
+    </div>
+  </div>
+  <mat-divider style="margin-top: 1em"></mat-divider>
+  <div *ngFor="let day of allDaysIndex" fxLayout="column" formArrayName="items">
+    <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" [formGroupName]="''+day" fxLayoutAlign="space-between center" fxLayoutAlign.xs="center start">
+      <mat-checkbox fxFlex="20" formControlName="enabled" (change)="changeCustomScheduler($event, day)" >
+        {{ dayOfWeekTranslationsArray[day] | translate | titlecase }}
+      </mat-checkbox>
+      <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+        <input required matInput formControlName="openTime" type="time" min="00:00" max="24:00">
+      </mat-form-field>
+      <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+        <mat-select formControlName="openFlow" required>
+          <mat-option *ngFor="let value of percentages" [value]="value">{{value}}%</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+        <input required matInput formControlName="closeTime" type="time" min="00:00" max="24:00">
+      </mat-form-field>
+      <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+          <mat-select formControlName="closeFlow" required>
+            <mat-option *ngFor="let value of percentages" [value]="value">{{value}}%</mat-option>
+          </mat-select>
+        </mat-form-field>
+    </div>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || form.invalid || !form.dirty">
+      {{ 'action.save' | translate }}
+    </button>
+  </div>
+</form>

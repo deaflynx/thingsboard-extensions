@@ -15,6 +15,7 @@ import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {MatSortModule} from "@angular/material/sort";
 import {FormsModule} from "@angular/forms";
 import {MatTableModule} from "@angular/material/table";
+import { RadiatorSmartThermostatModule } from './components/radiator-smart-thermostat/radiator-smart-thermostat.module';
 
 @NgModule({
   declarations: [],
@@ -34,7 +35,8 @@ import {MatTableModule} from "@angular/material/table";
   ],
   exports: [
     SolchipSensorLatestCardModule,
-    IrrigationControlTableModule
+    IrrigationControlTableModule,
+    RadiatorSmartThermostatModule
   ]
 })
 export class ThingsboardExtensionWidgetsModule {
