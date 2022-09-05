@@ -22,10 +22,7 @@ interface RadiatorSmartThermostatData {
 @Component({
   selector: 'radiator-smart-thermostat',
   templateUrl: './radiator-smart-thermostat.component.html',
-  styleUrls: [
-    './radiator-smart-thermostat.component.scss'
-  ],
-  encapsulation: ViewEncapsulation.None
+  styleUrls: ['./radiator-smart-thermostat.component.scss']
 })
 export class RadiatorSmartThermostatComponent extends PageComponent implements OnInit, AfterViewInit {
 
@@ -120,7 +117,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   }
 
   private patchValues(attributes: AttributeData) {
-    this.initConfigAttributes = attributes;
+    this.setInitConfigAttributes(attributes);
     for (let key in attributes) {
       let index = this.allDaysValue.indexOf(key);
       if (index > -1) {
@@ -137,6 +134,10 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
         }
       }
     }
+  }
+
+  private setInitConfigAttributes(attributes) {
+    this.initConfigAttributes = attributes;
   }
 
   changeCustomScheduler($event: MatCheckboxChange, index: number) {
@@ -201,6 +202,9 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
         ruleEngineRequestData[key] = newValue;
       }
     });
+
+    this.setInitConfigAttributes(deviceAttributesValue);
+
     const deviceAttributesData: Array<AttributeData> = [{
       key,
       value: deviceAttributesValue
