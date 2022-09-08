@@ -56,6 +56,10 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   private emptyValue = 'N/A';
 
+  private validTimeRegex: string = `^([01]\\d|2[0-3]):([0-5]\\d)$`;
+
+  timeFormatErrorText: string = "24-hour format is required e.g. 23:59";
+
   get itemsSchedulerForm(): FormArray {
     return this.form.get('items') as FormArray;
   }
@@ -89,8 +93,8 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     return this.fb.group({
       enabled: [true],
       dayOfWeek: [this.allDaysValue[index]],
-      openTime: [null, Validators.required],
-      closeTime: [null, Validators.required],
+      openTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex)]],
+      closeTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex)]],
       openFlow: [null, [Validators.required]],
       closeFlow: [null, [Validators.required]]
     });

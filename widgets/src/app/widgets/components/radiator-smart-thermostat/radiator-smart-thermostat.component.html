@@ -14,13 +14,16 @@
     </div>
   </div>
   <mat-divider style="margin-top: 1em"></mat-divider>
-  <div *ngFor="let day of allDaysIndex" fxLayout="column" formArrayName="items">
+  <div *ngFor="let day of allDaysIndex; let $index = index" fxLayout="column" formArrayName="items">
     <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" [formGroupName]="''+day" fxLayoutAlign="space-between center" fxLayoutAlign.xs="center start">
       <mat-checkbox fxFlex="20" formControlName="enabled" (change)="changeCustomScheduler($event, day)" >
         {{ dayOfWeekTranslationsArray[day] | translate | titlecase }}
       </mat-checkbox>
       <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
-        <input required matInput formControlName="openTime" type="time" min="00:00" max="24:00">
+        <input matInput type="text" formControlName="openTime" required>
+        <mat-error *ngIf="itemsSchedulerForm.at($index).get('openTime').hasError('pattern')">
+          {{ timeFormatErrorText }}
+        </mat-error>
       </mat-form-field>
       <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
         <mat-select formControlName="openFlow" required>
@@ -28,7 +31,10 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
-        <input required matInput formControlName="closeTime" type="time" min="00:00" max="24:00">
+        <input matInput type="text" formControlName="closeTime" required>
+        <mat-error *ngIf="itemsSchedulerForm.at($index).get('closeTime').hasError('pattern')">
+          {{ timeFormatErrorText }}
+        </mat-error>
       </mat-form-field>
       <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
           <mat-select formControlName="closeFlow" required>
