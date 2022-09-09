@@ -127,7 +127,11 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   private getThermostatAttributes() {
     this.attributeService.getEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, [this.thermostatConfigAttributes]).subscribe(
       attributes => {
-        if (attributes.length) this.patchValues(attributes[0].value);
+        if (attributes.length) {
+          const value = attributes[0].value;
+          this.patchValues(value);
+          this.setInitConfigAttributes(value);
+        }
       }
     );
   }
@@ -143,7 +147,6 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   }
 
   private patchValues(attributes: AttributeData) {
-    this.setInitConfigAttributes(attributes);
     for (let key in attributes) {
       let index = this.allDaysValue.indexOf(key);
       if (index > -1) {
@@ -152,6 +155,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
           data.enabled = true;
           data.dayOfWeek = key;
           this.itemsSchedulerForm.at(index).patchValue(data);
+          this.enableItems(index);
         } else {
           data.enabled = false;
           data.dayOfWeek = key;
@@ -280,6 +284,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   loadTemplate() {
     const targetTemplate = this.templateForm.get('value')?.value;
     this.patchValues(targetTemplate?.value);
+    this.updateForm();
   }
 
   deleteTemplate() {
@@ -290,6 +295,12 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
       value: newConfigTemplates
     }];
     this.attributeService.saveEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, configTemplatesAttributes).subscribe();
+  }
+
+  private updateForm() {
+    this.form.markAsTouched();
+    this.form.markAsDirty();
+    this.ctx.detectChanges();
   }
 
 }
