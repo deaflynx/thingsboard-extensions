@@ -2,8 +2,10 @@
  * Copyright © 2021 ThingsBoard, Inc.
  */
 
-.cell-header {
-  font-size: 14px;
-  font-weight: 500;
-  color: #0000008a;
+:host {
+  .cell-header {
+    font-size: 14px;
+    font-weight: 500;
+    color: #0000008a;
+  }
 }

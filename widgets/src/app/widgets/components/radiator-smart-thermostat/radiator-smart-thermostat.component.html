@@ -3,7 +3,7 @@
     Copyright © 2021 ThingsBoard, Inc.
 
 -->
-<form [formGroup]="form" fxLayout="column" (ngSubmit)="save()">
+<form [formGroup]="form" fxLayout="column">
   <div fxLayout="column">
     <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="space-between center" fxLayoutAlign.xs="center start">
       <mat-label class="cell-header" fxFlex="20">Day</mat-label>
@@ -45,9 +45,59 @@
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-raised-button color="primary"
-            type="submit"
+            (click)="save()"
             [disabled]="(isLoading$ | async) || form.invalid || !form.dirty">
       {{ 'action.save' | translate }}
     </button>
   </div>
+
+  <mat-accordion>
+    <mat-expansion-panel [expanded]="false">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div>Templates</div>
+        </mat-panel-title>
+        <mat-panel-description>
+          Save and load scheduler configuration as template
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <form [formGroup]="templateForm">
+        <div fxLayout="column">
+          <div  fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start">
+            <mat-form-field appearance="fill">
+              <mat-label>Current config template title</mat-label>
+              <input matInput type="text" formControlName="title">
+            </mat-form-field>
+            <button mat-raised-button color="primary"
+                    (click)="saveTemplate()"
+                    [disabled]="(isLoading$ | async) || form.invalid || !form.dirty || !templateForm.get('title').value?.length">
+              Save as template
+            </button>
+          </div>
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center" fxLayout.xs="column"  fxLayoutAlign.xs="center start">
+            <mat-form-field appearance="fill" class="mat-block">
+              <mat-label>Select template</mat-label>
+              <mat-select formControlName="template">
+                <mat-option *ngFor="let template of configTemplatesObservable" [value]="template">
+                  {{ template.title }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <button mat-raised-button color="warn" type="button"
+                    (click)="deleteTemplate()"
+                    [disabled]="(isLoading$ | async) || !templateForm.get('template').value?.title?.length">
+              {{ 'action.delete' | translate }}
+            </button>
+            <button mat-raised-button color="primary" type="button"
+                    (click)="loadTemplate()"
+                    [disabled]="(isLoading$ | async) || !templateForm.get('template').value?.title?.length">
+              {{ 'action.apply' | translate }}
+            </button>
+          </div>
+        </div>
+        {{ templateForm.getRawValue() | json }}
+      </form>
+    </mat-expansion-panel>
+  </mat-accordion>
+
 </form>

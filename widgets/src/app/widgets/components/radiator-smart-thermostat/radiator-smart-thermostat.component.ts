@@ -10,7 +10,8 @@ import { AttributeData, AttributeScope, Device, PageComponent } from '@shared/pu
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
-import { HttpClient } from '@angular/common/http';
+import { Observable, of } from "rxjs";
+import {map, mergeMap, mergeMapTo} from "rxjs/operators";
 
 interface RadiatorSmartThermostatData {
   openTime: string,
@@ -31,6 +32,8 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   device: Device;
 
   form: FormGroup;
+
+  templateForm: FormGroup;
 
   allDaysIndex = Array(7).fill(0).map((x, i) => i);
 
@@ -60,6 +63,10 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   timeFormatErrorText: string = "24-hour format is required e.g. 23:59";
 
+  configTemplates: any;
+
+  configTemplatesObservable: Observable<any>;
+
   get itemsSchedulerForm(): FormArray {
     return this.form.get('items') as FormArray;
   }
@@ -69,23 +76,31 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
               private attributeService: AttributeService,
               private deviceService: DeviceService,
               private ruleEngineService: RuleEngineService,
-              private translate: TranslateService,
-              private http: HttpClient) {
+              private translate: TranslateService) {
     super(store);
   }
 
   ngOnInit() {
     this.getDaysOfTheWeek();
-    this.buildForm();
+
+    this.buildSchedulerForm();
+    this.buildTemplateForm();
   }
 
   private getDaysOfTheWeek() {
     this.allDaysValue = this.dayOfWeekTranslationsArray.map(value => this.translate.instant(value).toLowerCase());
   }
 
-  private buildForm() {
+  private buildSchedulerForm() {
     this.form = this.fb.group({
       items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)))
+    });
+  }
+
+  private buildTemplateForm() {
+    this.templateForm = this.fb.group({
+      title: ['', []],
+      template: ['', []]
     });
   }
 
@@ -105,18 +120,26 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     this.deviceService.getDevice(entityId.id).subscribe(device => {
       this.device = device;
       this.getThermostatAttributes();
+      this.getTemplates();
     });
   }
 
   private getThermostatAttributes() {
     this.attributeService.getEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, [this.thermostatConfigAttributes]).subscribe(
-      attributes => attributes.length ? this.patchValues(attributes[0].value) : this.getOwnerAttributes()
+      attributes => {
+        if (attributes.length) this.patchValues(attributes[0].value);
+      }
     );
   }
 
-  private getOwnerAttributes() {
+  private getTemplates() {
     this.attributeService.getEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templateConfigAttributes]).subscribe(
-      attributes => { if (attributes.length) this.patchValues(attributes[0].value); }
+      attributes => {
+        if (attributes.length) {
+          this.configTemplatesObservable = attributes[0].value;
+          // this.patchValues(attributes[0].value);
+        }
+      }
     );
   }
 
@@ -224,6 +247,27 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
       },
       {}
     );
+  }
+
+  saveTemplate() {
+    const [deviceAttributesData, ruleEngineRequestData] = [...this.prepareData()];
+    this.configTemplates.value = this.configTemplates.value.concat(deviceAttributesData.value);
+    this.attributeService.saveEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, deviceAttributesData).subscribe();
+  }
+
+  loadTemplate() {
+    const targetTemplate = this.templateForm.get('template')?.value;
+    this.patchValues(targetTemplate?.value);
+  }
+
+  deleteTemplate() {
+    const targetTemplate = this.templateForm.get('template')?.value;
+    let newConfigTemplates = [...this.configTemplates.value].filter(template => template.key !== targetTemplate?.key);
+    const configTemplatesAttributes = [{
+      key: this.templateConfigAttributes,
+      value: newConfigTemplates
+    }];
+    this.attributeService.saveEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, configTemplatesAttributes).subscribe();
   }
 
 }
