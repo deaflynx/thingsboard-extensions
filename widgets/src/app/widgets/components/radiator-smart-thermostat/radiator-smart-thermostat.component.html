@@ -43,19 +43,11 @@
         </mat-form-field>
     </div>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            (click)="save()"
-            [disabled]="(isLoading$ | async) || form.invalid || !form.dirty">
-      {{ 'action.save' | translate }}
-    </button>
-  </div>
-
-  <mat-accordion>
+  <mat-accordion style="padding: 1em 0 1em 0">
     <mat-expansion-panel [expanded]="false">
       <mat-expansion-panel-header>
         <mat-panel-title>
-          <div>Templates</div>
+          <div>Configuration templates</div>
         </mat-panel-title>
         <mat-panel-description>
           Save and load scheduler configuration as template
@@ -70,7 +62,7 @@
             </mat-form-field>
             <button mat-raised-button color="primary"
                     (click)="saveTemplate()"
-                    [disabled]="(isLoading$ | async) || form.invalid || !form.dirty || !templateForm.get('key').value?.length">
+                    [disabled]="(isLoading$ | async) || !templateForm.get('key').value?.length">
               Save as template
             </button>
           </div>
@@ -91,13 +83,18 @@
             <button mat-raised-button color="primary" type="button"
                     (click)="loadTemplate()"
                     [disabled]="(isLoading$ | async) || !templateForm.get('value').value?.key?.length">
-              {{ 'action.apply' | translate }}
+              Load
             </button>
           </div>
         </div>
-        {{ templateForm.getRawValue() | json }}
       </form>
     </mat-expansion-panel>
   </mat-accordion>
-
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
+            (click)="save()"
+            [disabled]="(isLoading$ | async) || form.invalid || !form.dirty">
+      {{ 'action.save' | translate }}
+    </button>
+  </div>
 </form>

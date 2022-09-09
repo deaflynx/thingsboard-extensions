@@ -2,7 +2,7 @@
 /// Copyright © 2021 ThingsBoard, Inc.
 ///
 
-import { AfterViewInit, Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AppState, AttributeService, DeviceService, RuleEngineService } from '@core/public-api';
@@ -10,8 +10,8 @@ import { AttributeData, AttributeScope, Device, PageComponent } from '@shared/pu
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
-import { Observable, of } from "rxjs";
-import {map, mergeMap, mergeMapTo} from "rxjs/operators";
+import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
 
 interface RadiatorSmartThermostatData {
   openTime: string,
@@ -129,7 +129,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
       attributes => {
         if (attributes.length) {
           const value = attributes[0].value;
-          this.patchValues(value);
+          this.patchFormValues(value);
           this.setInitConfigAttributes(value);
         }
       }
@@ -146,7 +146,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
       );
   }
 
-  private patchValues(attributes: AttributeData) {
+  private patchFormValues(attributes: AttributeData) {
     for (let key in attributes) {
       let index = this.allDaysValue.indexOf(key);
       if (index > -1) {
@@ -209,7 +209,6 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     const formValues = this.form.get('items').value;
     const deviceAttributesValue = {};
     const ruleEngineRequestData = {};
-
     formValues.map(value => {
       let key = value.dayOfWeek;
       let newValue: RadiatorSmartThermostatData | string;
@@ -253,10 +252,9 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   }
 
   saveTemplate() {
-    const currentConfig = this.prepareTemplate();
-    this.templatesAttributes.value = this.templatesAttributes.value.concat(currentConfig);
-    this.attributeService.saveEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templatesAttributes])
-      .subscribe(() => this.getTemplates());
+    const currentTemplate = this.prepareTemplate();
+    this.templatesAttributes.value = this.templatesAttributes.value.concat(currentTemplate);
+    this.saveOwnerTemplatesAttributes();
   }
 
   private prepareTemplate(): AttributeData {
@@ -283,18 +281,21 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   loadTemplate() {
     const targetTemplate = this.templateForm.get('value')?.value;
-    this.patchValues(targetTemplate?.value);
+    this.patchFormValues(targetTemplate?.value);
     this.updateForm();
   }
 
   deleteTemplate() {
     const targetTemplate = this.templateForm.get('value')?.value;
-    let newConfigTemplates = [...this.templatesAttributes.value].filter(template => template.key !== targetTemplate?.key);
-    const configTemplatesAttributes = [{
-      key: this.templateConfigAttributes,
-      value: newConfigTemplates
-    }];
-    this.attributeService.saveEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, configTemplatesAttributes).subscribe();
+    this.templatesAttributes.value = this.templatesAttributes.value.filter(template => template.key !== targetTemplate?.key);
+    this.saveOwnerTemplatesAttributes();
+  }
+
+  private saveOwnerTemplatesAttributes() {
+    this.attributeService.saveEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templatesAttributes])
+      .subscribe(() => {
+        this.getTemplates();
+      });
   }
 
   private updateForm() {
