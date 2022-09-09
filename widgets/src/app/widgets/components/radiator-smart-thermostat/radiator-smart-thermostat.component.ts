@@ -63,9 +63,9 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   timeFormatErrorText: string = "24-hour format is required e.g. 23:59";
 
-  configTemplates: any;
+  templatesAttributes: any;
 
-  configTemplatesObservable: Observable<any>;
+  configTemplatesObservable: Observable<any[]>;
 
   get itemsSchedulerForm(): FormArray {
     return this.form.get('items') as FormArray;
@@ -99,8 +99,8 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   private buildTemplateForm() {
     this.templateForm = this.fb.group({
-      title: ['', []],
-      template: ['', []]
+      key: ['', []],
+      value: ['', []]
     });
   }
 
@@ -133,14 +133,13 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   }
 
   private getTemplates() {
-    this.attributeService.getEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templateConfigAttributes]).subscribe(
-      attributes => {
-        if (attributes.length) {
-          this.configTemplatesObservable = attributes[0].value;
-          // this.patchValues(attributes[0].value);
-        }
-      }
-    );
+    this.configTemplatesObservable = this.attributeService.getEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templateConfigAttributes])
+      .pipe(
+        map(attributes => {
+          this.templatesAttributes = attributes[0];
+          return attributes[0].value;
+        })
+      );
   }
 
   private patchValues(attributes: AttributeData) {
@@ -197,11 +196,11 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   save() {
     this.form.markAsPristine();
     const [deviceAttributesData, ruleEngineRequestData] = [...this.prepareData()];
-    this.attributeService.saveEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, deviceAttributesData).subscribe();
-    this.ruleEngineService.makeRequestToRuleEngineFromEntity(this.device.id, ruleEngineRequestData, 10000, {ignoreErrors: true, ignoreLoading: true}).subscribe();
+    this.attributeService.saveEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, [deviceAttributesData]).subscribe();
+    this.ruleEngineService.makeRequestToRuleEngineFromEntity(this.device.id, ruleEngineRequestData).subscribe();
   }
 
-  private prepareData(): Array<Array<AttributeData> | any> {
+  private prepareData(): Array<AttributeData | any> {
     const key = this.thermostatConfigAttributes;
     const formValues = this.form.get('items').value;
     const deviceAttributesValue = {};
@@ -232,10 +231,10 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
     this.setInitConfigAttributes(deviceAttributesValue);
 
-    const deviceAttributesData: Array<AttributeData> = [{
+    const deviceAttributesData: AttributeData = {
       key,
       value: deviceAttributesValue
-    }];
+    };
     return [deviceAttributesData, {deltaRadiatorSmartThermostatConfig: ruleEngineRequestData}];
   }
 
@@ -250,19 +249,42 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   }
 
   saveTemplate() {
-    const [deviceAttributesData, ruleEngineRequestData] = [...this.prepareData()];
-    this.configTemplates.value = this.configTemplates.value.concat(deviceAttributesData.value);
-    this.attributeService.saveEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, deviceAttributesData).subscribe();
+    const currentConfig = this.prepareTemplate();
+    this.templatesAttributes.value = this.templatesAttributes.value.concat(currentConfig);
+    this.attributeService.saveEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templatesAttributes])
+      .subscribe(() => this.getTemplates());
+  }
+
+  private prepareTemplate(): AttributeData {
+    const key = this.templateForm.get('key').value;
+    const formValues = this.form.get('items').value;
+    const value = {};
+    formValues.map(config => {
+      let key = config.dayOfWeek;
+      let newValue: RadiatorSmartThermostatData | string;
+      if (config.openTime) {
+        newValue = {
+          openTime: config.openTime,
+          closeTime: config.closeTime,
+          openFlow: config.openFlow,
+          closeFlow: config.closeFlow
+        }
+      } else {
+        newValue = this.emptyValue;
+      }
+      value[key] = newValue;
+    });
+    return { key, value } as AttributeData;
   }
 
   loadTemplate() {
-    const targetTemplate = this.templateForm.get('template')?.value;
+    const targetTemplate = this.templateForm.get('value')?.value;
     this.patchValues(targetTemplate?.value);
   }
 
   deleteTemplate() {
-    const targetTemplate = this.templateForm.get('template')?.value;
-    let newConfigTemplates = [...this.configTemplates.value].filter(template => template.key !== targetTemplate?.key);
+    const targetTemplate = this.templateForm.get('value')?.value;
+    let newConfigTemplates = [...this.templatesAttributes.value].filter(template => template.key !== targetTemplate?.key);
     const configTemplatesAttributes = [{
       key: this.templateConfigAttributes,
       value: newConfigTemplates

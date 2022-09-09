@@ -66,31 +66,31 @@
           <div  fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start">
             <mat-form-field appearance="fill">
               <mat-label>Current config template title</mat-label>
-              <input matInput type="text" formControlName="title">
+              <input matInput type="text" formControlName="key">
             </mat-form-field>
             <button mat-raised-button color="primary"
                     (click)="saveTemplate()"
-                    [disabled]="(isLoading$ | async) || form.invalid || !form.dirty || !templateForm.get('title').value?.length">
+                    [disabled]="(isLoading$ | async) || form.invalid || !form.dirty || !templateForm.get('key').value?.length">
               Save as template
             </button>
           </div>
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center" fxLayout.xs="column"  fxLayoutAlign.xs="center start">
             <mat-form-field appearance="fill" class="mat-block">
               <mat-label>Select template</mat-label>
-              <mat-select formControlName="template">
-                <mat-option *ngFor="let template of configTemplatesObservable" [value]="template">
-                  {{ template.title }}
+              <mat-select formControlName="value">
+                <mat-option *ngFor="let template of configTemplatesObservable | async" [value]="template">
+                  {{ template.key }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
             <button mat-raised-button color="warn" type="button"
                     (click)="deleteTemplate()"
-                    [disabled]="(isLoading$ | async) || !templateForm.get('template').value?.title?.length">
+                    [disabled]="(isLoading$ | async) || !templateForm.get('value').value?.title?.length">
               {{ 'action.delete' | translate }}
             </button>
             <button mat-raised-button color="primary" type="button"
                     (click)="loadTemplate()"
-                    [disabled]="(isLoading$ | async) || !templateForm.get('template').value?.title?.length">
+                    [disabled]="(isLoading$ | async) || !templateForm.get('value').value?.title?.length">
               {{ 'action.apply' | translate }}
             </button>
           </div>
