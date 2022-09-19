@@ -127,11 +127,23 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   private getThermostatAttributes() {
     this.attributeService.getEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, [this.thermostatConfigAttributes]).subscribe(
       attributes => {
+        let value = {};
         if (attributes.length) {
-          const value = attributes[0].value;
-          this.patchFormValues(value);
-          this.setInitConfigAttributes(value);
+          value = attributes[0].value;
+        } else {
+          const defaultDayConfig = {"openTime": "01:00", "closeTime": "22:00", "openFlow": 100, "closeFlow": 0};
+          value = {
+              monday: defaultDayConfig,
+              tuesday: defaultDayConfig,
+              wednesday: defaultDayConfig,
+              thursday: defaultDayConfig,
+              friday: defaultDayConfig,
+              saturday: defaultDayConfig,
+              sunday: defaultDayConfig
+          };
         }
+        this.patchFormValues(value);
+        this.setInitConfigAttributes(value);
       }
     );
   }
@@ -146,7 +158,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
       );
   }
 
-  private patchFormValues(attributes: AttributeData) {
+  private patchFormValues(attributes: any) {
     for (let key in attributes) {
       let index = this.allDaysValue.indexOf(key);
       if (index > -1) {
