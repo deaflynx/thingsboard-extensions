@@ -117,11 +117,13 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   ngAfterViewInit() {
     const entityId = this.ctx.stateController.getStateParams().entityId;
-    this.deviceService.getDevice(entityId.id).subscribe(device => {
-      this.device = device;
-      this.getThermostatAttributes();
-      this.getTemplates();
-    });
+    if (entityId?.id) {
+      this.deviceService.getDevice(entityId.id).subscribe(device => {
+        this.device = device;
+        this.getThermostatAttributes();
+        this.getTemplates();
+      });
+    }
   }
 
   private getThermostatAttributes() {
