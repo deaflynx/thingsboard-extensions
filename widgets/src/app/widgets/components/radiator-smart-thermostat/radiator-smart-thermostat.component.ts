@@ -2,16 +2,25 @@
 /// Copyright © 2021 ThingsBoard, Inc.
 ///
 
-import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
+import {AfterViewInit, Component, forwardRef, Input, OnInit} from '@angular/core';
 import { MatCheckboxChange } from '@angular/material/checkbox';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AppState, AttributeService, DeviceService, RuleEngineService } from '@core/public-api';
-import { AttributeData, AttributeScope, Device, PageComponent } from '@shared/public-api';
-import { WidgetContext } from '@home/models/widget-component.models';
-import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngrx/store';
-import { Observable } from "rxjs";
-import { map } from "rxjs/operators";
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder, FormControl,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  Validator, ValidatorFn,
+  Validators
+} from '@angular/forms';
+import {AppState, AttributeService, DeviceService, RuleEngineService} from '@core/public-api';
+import {AttributeData, AttributeScope, Device, PageComponent} from '@shared/public-api';
+import {WidgetContext} from '@home/models/widget-component.models';
+import {TranslateService} from '@ngx-translate/core';
+import {Store} from '@ngrx/store';
+import {Observable} from "rxjs";
+import {map} from "rxjs/operators";
 
 interface RadiatorSmartThermostatData {
   openTime: string,
@@ -41,7 +50,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   percentages = [0, 100];
 
-  dayOfWeekTranslationsArray = new Array<string> (
+  dayOfWeekTranslationsArray = new Array<string>(
     'device-profile.schedule-day.monday',
     'device-profile.schedule-day.tuesday',
     'device-profile.schedule-day.wednesday',
@@ -316,6 +325,29 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     this.form.markAsTouched();
     this.form.markAsDirty();
     this.ctx.detectChanges();
+  }
+
+  compareStartEndTime() {
+    console.log('sagsag', this.itemsSchedulerForm.controls)
+    for (let i = 0; i < this.itemsSchedulerForm.controls.length ;i ++) {
+      (value, index) => {
+          if (value.value.openTime) {
+            console.log('value', value)
+            const openTime = value.value.openTime;
+            const closeTime = value.value.closeTime;
+            if (openTime && closeTime) {
+              const [openTimeHour, openTimeMinutes] = [...openTime.split(':')];
+              const [closeTimeHour, closeTimeMinutes] = [...closeTime.split(':')];
+              if (openTimeHour > closeTimeHour) {
+                console.log('yes', index, value)
+                this.itemsSchedulerForm.at(index).get('openTime').setErrors({time: {valid: true}});
+              }
+            }
+          } else {
+            this.itemsSchedulerForm.at(index).get('openTime').setErrors({time: {valid: false}});
+          }
+        }
+    }
   }
 
 }
