@@ -72,6 +72,8 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   timeFormatErrorText: string = "24-hour format is required e.g. 23:59";
 
+  openBiggerCloseErrorText: string = "Open time is higher than Close time";
+
   templatesAttributes: any;
 
   configTemplatesObservable: Observable<any[]>;
@@ -104,7 +106,13 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     this.form = this.fb.group({
       items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)))
     });
+    this.form.controls['items'].valueChanges.subscribe(
+      () => {
+        this.validateOpenCloseTime();
+      }
+    )
   }
+
 
   private buildTemplateForm() {
     this.templateForm = this.fb.group({
@@ -327,24 +335,20 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     this.ctx.detectChanges();
   }
 
-  compareStartEndTime() {
-    console.log('sagsag', this.itemsSchedulerForm.controls)
+  private validateOpenCloseTime() {
     for (let i = 0; i < this.itemsSchedulerForm.controls.length ;i ++) {
-      (value, index) => {
-          if (value.value.openTime) {
-            console.log('value', value)
-            const openTime = value.value.openTime;
-            const closeTime = value.value.closeTime;
-            if (openTime && closeTime) {
-              const [openTimeHour, openTimeMinutes] = [...openTime.split(':')];
-              const [closeTimeHour, closeTimeMinutes] = [...closeTime.split(':')];
-              if (openTimeHour > closeTimeHour) {
-                console.log('yes', index, value)
-                this.itemsSchedulerForm.at(index).get('openTime').setErrors({time: {valid: true}});
-              }
+      const value = this.itemsSchedulerForm.controls[i];
+        if (value.value.openTime) {
+          const openTime = value.value.openTime;
+          const closeTime = value.value.closeTime;
+          if (openTime && closeTime) {
+            const [openTimeHour, openTimeMinutes] = [...openTime.split(':')];
+            const [closeTimeHour, closeTimeMinutes] = [...closeTime.split(':')];
+            if ((openTimeHour > closeTimeHour) || (openTimeHour === closeTimeHour && openTimeMinutes >= closeTimeMinutes)) {
+              this.itemsSchedulerForm.at(i).get('openTime').setErrors({ time: {valid: true} });
+            } else {
+              this.itemsSchedulerForm.at(i).get('openTime').setErrors(null);
             }
-          } else {
-            this.itemsSchedulerForm.at(index).get('openTime').setErrors({time: {valid: false}});
           }
         }
     }

@@ -24,6 +24,9 @@
         <mat-error *ngIf="itemsSchedulerForm.at($index).get('openTime').hasError('pattern')">
           {{ timeFormatErrorText }}
         </mat-error>
+        <mat-error *ngIf="itemsSchedulerForm.at($index).get('openTime').hasError('time')">
+          {{ openBiggerCloseErrorText }}
+        </mat-error>
       </mat-form-field>
       <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
         <mat-select formControlName="openFlow" required>
@@ -42,9 +45,6 @@
           </mat-select>
         </mat-form-field>
     </div>
-    <mat-error *ngIf="itemsSchedulerForm.at($index).get('openTime').hasError('time')">
-      woops
-    </mat-error>
   </div>
   <mat-accordion style="padding: 1em 0 1em 0">
     <mat-expansion-panel [expanded]="false">
@@ -94,10 +94,6 @@
     </mat-expansion-panel>
   </mat-accordion>
   <div mat-dialog-actions fxLayoutAlign="end center">
-    <button (click)="compareStartEndTime()"
-            [disabled]="(isLoading$ | async) || form.invalid || !form.dirty">
-      Compare
-    </button>
     <button mat-raised-button color="primary"
             (click)="save()"
             [disabled]="(isLoading$ | async) || form.invalid || !form.dirty">
