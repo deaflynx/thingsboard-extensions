@@ -72,7 +72,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   timeFormatErrorText: string = "24-hour format is required e.g. 23:59";
 
-  openBiggerCloseErrorText: string = "Open time is higher than Close time";
+  openCloseTimeErrorText: string = "Open time is later than Close time";
 
   templatesAttributes: any;
 

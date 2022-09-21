@@ -25,7 +25,7 @@
           {{ timeFormatErrorText }}
         </mat-error>
         <mat-error *ngIf="itemsSchedulerForm.at($index).get('openTime').hasError('time')">
-          {{ openBiggerCloseErrorText }}
+          {{ openCloseTimeErrorText }}
         </mat-error>
       </mat-form-field>
       <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
