@@ -38,12 +38,15 @@
         <mat-error *ngIf="itemsSchedulerForm.at($index).get('closeTime').hasError('pattern')">
           {{ timeFormatErrorText }}
         </mat-error>
+        <mat-error *ngIf="itemsSchedulerForm.at($index).get('closeTime').hasError('time')">
+          {{ openCloseTimeErrorText }}
+        </mat-error>
       </mat-form-field>
       <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
           <mat-select formControlName="closeFlow" required>
             <mat-option *ngFor="let value of percentages" [value]="value">{{value}}%</mat-option>
           </mat-select>
-        </mat-form-field>
+      </mat-form-field>
     </div>
   </div>
   <mat-accordion style="padding: 1em 0 1em 0">

@@ -2,25 +2,22 @@
 /// Copyright © 2021 ThingsBoard, Inc.
 ///
 
-import {AfterViewInit, Component, forwardRef, Input, OnInit} from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import {
-  AbstractControl,
   FormArray,
   FormBuilder, FormControl,
   FormGroup,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
-  Validator, ValidatorFn,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
-import {AppState, AttributeService, DeviceService, RuleEngineService} from '@core/public-api';
-import {AttributeData, AttributeScope, Device, PageComponent} from '@shared/public-api';
-import {WidgetContext} from '@home/models/widget-component.models';
-import {TranslateService} from '@ngx-translate/core';
-import {Store} from '@ngrx/store';
-import {Observable} from "rxjs";
-import {map} from "rxjs/operators";
+import { AppState, AttributeService, DeviceService, RuleEngineService } from '@core/public-api';
+import { AttributeData, AttributeScope, Device, PageComponent } from '@shared/public-api';
+import { WidgetContext } from '@home/models/widget-component.models';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngrx/store';
+import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
 
 interface RadiatorSmartThermostatData {
   openTime: string,
@@ -72,14 +69,14 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   timeFormatErrorText: string = "24-hour format is required e.g. 23:59";
 
-  openCloseTimeErrorText: string = "Open time is later than Close time";
+  openCloseTimeErrorText: string = "Open time can't be later than close";
 
   templatesAttributes: any;
 
   configTemplatesObservable: Observable<any[]>;
 
   get itemsSchedulerForm(): FormArray {
-    return this.form.get('items') as FormArray;
+    return this.form?.get('items') as FormArray;
   }
 
   constructor(protected store: Store<AppState>,
@@ -106,13 +103,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     this.form = this.fb.group({
       items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)))
     });
-    this.form.controls['items'].valueChanges.subscribe(
-      () => {
-        this.validateOpenCloseTime();
-      }
-    )
   }
-
 
   private buildTemplateForm() {
     this.templateForm = this.fb.group({
@@ -125,8 +116,8 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     return this.fb.group({
       enabled: [true],
       dayOfWeek: [this.allDaysValue[index]],
-      openTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex)]],
-      closeTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex)]],
+      openTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex), this.validateOpenTime(index)]],
+      closeTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex), this.validateCloseTime(index)]],
       openFlow: [null, [Validators.required]],
       closeFlow: [null, [Validators.required]]
     });
@@ -150,15 +141,20 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
         if (attributes.length) {
           value = attributes[0].value;
         } else {
-          const defaultDayConfig = {"openTime": "01:00", "closeTime": "22:00", "openFlow": 100, "closeFlow": 0};
+          const defaultDayConfig = {
+            "openTime": "08:00",
+            "closeTime": "18:00",
+            "openFlow": 100,
+            "closeFlow": 0
+          };
           value = {
-              monday: defaultDayConfig,
-              tuesday: defaultDayConfig,
-              wednesday: defaultDayConfig,
-              thursday: defaultDayConfig,
-              friday: defaultDayConfig,
-              saturday: defaultDayConfig,
-              sunday: defaultDayConfig
+            monday: defaultDayConfig,
+            tuesday: defaultDayConfig,
+            wednesday: defaultDayConfig,
+            thursday: defaultDayConfig,
+            friday: defaultDayConfig,
+            saturday: defaultDayConfig,
+            sunday: defaultDayConfig
           };
         }
         this.patchFormValues(value);
@@ -307,7 +303,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
       }
       value[key] = newValue;
     });
-    return { key, value } as AttributeData;
+    return {key, value} as AttributeData;
   }
 
   loadTemplate() {
@@ -335,23 +331,49 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     this.ctx.detectChanges();
   }
 
-  private validateOpenCloseTime() {
-    for (let i = 0; i < this.itemsSchedulerForm.controls.length ;i ++) {
-      const value = this.itemsSchedulerForm.controls[i];
-        if (value.value.openTime) {
-          const openTime = value.value.openTime;
-          const closeTime = value.value.closeTime;
-          if (openTime && closeTime) {
-            const [openTimeHour, openTimeMinutes] = [...openTime.split(':')];
-            const [closeTimeHour, closeTimeMinutes] = [...closeTime.split(':')];
-            if ((openTimeHour > closeTimeHour) || (openTimeHour === closeTimeHour && openTimeMinutes >= closeTimeMinutes)) {
-              this.itemsSchedulerForm.at(i).get('openTime').setErrors({ time: {valid: true} });
-            } else {
-              this.itemsSchedulerForm.at(i).get('openTime').setErrors(null);
-            }
+  private validateOpenTime(i: number): ValidatorFn {
+    return (c: FormControl) => {
+      if (this.itemsSchedulerForm?.length) {
+        const value = this.itemsSchedulerForm.controls[i];
+        const openTime = c.value;
+        const closeTime = value.value.closeTime;
+        if (openTime && closeTime) {
+          const [openTimeHour, openTimeMinutes] = [...openTime.split(':')];
+          const [closeTimeHour, closeTimeMinutes] = [...closeTime.split(':')];
+          if ((openTimeHour > closeTimeHour) || (openTimeHour === closeTimeHour && openTimeMinutes >= closeTimeMinutes)) {
+            return {
+              time: {
+                valid: false
+              }
+            };
+          } else {
           }
         }
-    }
+      }
+      return null;
+    };
+  };
+
+  private validateCloseTime(i: number): ValidatorFn {
+    return (c: FormControl) => {
+      if (this.itemsSchedulerForm?.length) {
+        const value = this.itemsSchedulerForm.controls[i];
+        const closeTime = c.value;
+        const openTime = value.value.openTime;
+        if (openTime && closeTime) {
+          const [openTimeHour, openTimeMinutes] = [...openTime.split(':')];
+          const [closeTimeHour, closeTimeMinutes] = [...closeTime.split(':')];
+          if ((openTimeHour > closeTimeHour) || (openTimeHour === closeTimeHour && openTimeMinutes >= closeTimeMinutes)) {
+            return {
+              time: {
+                valid: false
+              }
+            };
+          }
+        }
+      }
+      return null;
+    };
   }
 
 }
