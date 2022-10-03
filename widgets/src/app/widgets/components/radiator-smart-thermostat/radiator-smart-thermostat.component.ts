@@ -116,8 +116,8 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     return this.fb.group({
       enabled: [true],
       dayOfWeek: [this.allDaysValue[index]],
-      openTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex), this.validateOpenTime(index)]],
-      closeTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex), this.validateCloseTime(index)]],
+      openTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex), this.validateOpenCloseTime(index, 'openTime')]],
+      closeTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex), this.validateOpenCloseTime(index, 'closeTime')]],
       openFlow: [null, [Validators.required]],
       closeFlow: [null, [Validators.required]]
     });
@@ -331,48 +331,40 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     this.ctx.detectChanges();
   }
 
-  private validateOpenTime(i: number): ValidatorFn {
+  private validateOpenCloseTime(i: number, control: string): ValidatorFn {
     return (c: FormControl) => {
       if (this.itemsSchedulerForm?.length) {
         const value = this.itemsSchedulerForm.controls[i];
-        const openTime = c.value;
-        const closeTime = value.value.closeTime;
+        let openTime,
+            closeTime,
+            controlToCheck;
+        if (control === 'openTime') {
+          openTime = c.value;
+          closeTime = value.value.closeTime;
+          controlToCheck = 'closeTime';
+        } else {
+          openTime = value.value.openTime;
+          closeTime = c.value;
+          controlToCheck = 'openTime';
+        }
         if (openTime && closeTime) {
           const [openTimeHour, openTimeMinutes] = [...openTime.split(':')];
           const [closeTimeHour, closeTimeMinutes] = [...closeTime.split(':')];
           if ((openTimeHour > closeTimeHour) || (openTimeHour === closeTimeHour && openTimeMinutes >= closeTimeMinutes)) {
-            return {
-              time: {
-                valid: false
-              }
-            };
+            return { time:{valid: false} };
+          } else {
+            const hasError = this.itemsSchedulerForm.at(i).get(controlToCheck).hasError('time');
+            if (hasError) {
+              const value = this.itemsSchedulerForm.at(i).get(controlToCheck).value;
+              this.itemsSchedulerForm.at(i).get(controlToCheck).setErrors({time: null});
+              this.itemsSchedulerForm.at(i).get(controlToCheck).patchValue(value);
+              this.itemsSchedulerForm.at(i).get(controlToCheck).updateValueAndValidity();
+            }
           }
         }
       }
       return null;
     };
   };
-
-  private validateCloseTime(i: number): ValidatorFn {
-    return (c: FormControl) => {
-      if (this.itemsSchedulerForm?.length) {
-        const value = this.itemsSchedulerForm.controls[i];
-        const closeTime = c.value;
-        const openTime = value.value.openTime;
-        if (openTime && closeTime) {
-          const [openTimeHour, openTimeMinutes] = [...openTime.split(':')];
-          const [closeTimeHour, closeTimeMinutes] = [...closeTime.split(':')];
-          if ((openTimeHour > closeTimeHour) || (openTimeHour === closeTimeHour && openTimeMinutes >= closeTimeMinutes)) {
-            return {
-              time: {
-                valid: false
-              }
-            };
-          }
-        }
-      }
-      return null;
-    };
-  }
 
 }
