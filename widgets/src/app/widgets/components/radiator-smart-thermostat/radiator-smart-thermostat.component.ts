@@ -346,7 +346,6 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
                 valid: false
               }
             };
-          } else {
           }
         }
       }
