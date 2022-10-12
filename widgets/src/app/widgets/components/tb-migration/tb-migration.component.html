@@ -1,0 +1,46 @@
+<!--
+
+    Copyright © 2021 ThingsBoard, Inc.
+
+-->
+
+<mat-card style="max-height: 80vh; overflow-y: auto;">
+  <mat-card-content>
+    <form class="tb-login-form" [formGroup]="migrationForumGroup" >
+      <fieldset [disabled]="isLoading" fxLayout="column">
+        <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading">
+        </mat-progress-bar>
+        <span style="height: 4px;" *ngIf="!isLoading"></span>
+        <div tb-toast fxLayout="column" class="layout-padding">
+          <mat-form-field>
+            <mat-label>Target instance url</mat-label>
+            <input id="urlinput" matInput autofocus formControlName="targetUrl"  required/>
+            <mat-icon matPrefix>start</mat-icon>
+            <mat-error *ngIf="migrationForumGroup.get('targetUrl').invalid">
+              Example "https://demo.example.com/"
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label translate>login.username</mat-label>
+            <input id="targetUsername" matInput type="email" autofocus formControlName="targetUsername" email required/>
+            <mat-icon matPrefix>email</mat-icon>
+            <mat-error *ngIf="migrationForumGroup.get('targetUsername').invalid">
+              {{ 'user.invalid-email-format' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label translate>common.password</mat-label>
+            <input id="targetPassword" matInput type="password" formControlName="targetPassword" required/>
+            <tb-toggle-password matSuffix></tb-toggle-password>
+            <mat-icon matPrefix>lock</mat-icon>
+          </mat-form-field>
+          <div fxLayout="column" class="tb-action-button">
+            <mat-progress-bar color="warn" mode="determinate" [value]="progress" *ngIf="isLoading" ></mat-progress-bar>
+            <button mat-raised-button color="accent" (click)="start()"[disabled]="isLoading || migrationForumGroup.invalid">
+              {{isLoading ? result:"Start migration"}}</button>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+  </mat-card-content>
+</mat-card>

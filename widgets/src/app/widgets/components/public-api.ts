@@ -2,6 +2,7 @@
 /// Copyright © 2021 ThingsBoard, Inc.
 ///
 
-export * from './alarm/public-api';
-export * from './example/public-api';
-export * from './map/public-api';
+export * from './tb-ingram-alarm-chart/public-api';
+export * from './tb-ingram-chart-gauge/public-api';
+export * from './tb-migration/public-api';
+export * from './tb-migration-customer/public-api';
