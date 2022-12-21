@@ -67,6 +67,8 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   private validTimeRegex: string = `^([01]\\d|2[0-3]):([0-5]\\d)$`;
 
+  private hasInitThermostatConfigAttributes: boolean = false;
+
   timeFormatErrorText: string = "24-hour format is required e.g. 23:59";
 
   openCloseTimeErrorText: string = "Open time can't be later than close";
@@ -139,6 +141,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
       attributes => {
         let value = {};
         if (attributes.length) {
+          this.hasInitThermostatConfigAttributes = true;
           value = attributes[0].value;
         } else {
           const defaultDayConfig = {
@@ -249,12 +252,14 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
       } else {
         newValue = this.emptyValue;
       }
-
       deviceAttributesValue[key] = newValue;
-
-      let newValueStringify = JSON.stringify(this.orderKeys(newValue));
-      let initValueStringify = JSON.stringify(this.orderKeys(this.initConfigAttributes[key]));
-      if (newValueStringify !== initValueStringify) {
+      if (this.hasInitThermostatConfigAttributes) {
+        let newValueStringify = JSON.stringify(this.orderKeys(newValue));
+        let initValueStringify = JSON.stringify(this.orderKeys(this.initConfigAttributes[key]));
+        if (newValueStringify !== initValueStringify) {
+          ruleEngineRequestData[key] = newValue;
+        }
+      } else {
         ruleEngineRequestData[key] = newValue;
       }
     });
