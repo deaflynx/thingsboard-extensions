@@ -12,7 +12,13 @@ import {
   Validators
 } from '@angular/forms';
 import { AppState, AttributeService, DeviceService, RuleEngineService } from '@core/public-api';
-import { AttributeData, AttributeScope, Device, PageComponent } from '@shared/public-api';
+import {
+  AttributeData,
+  AttributeScope,
+  Device,
+  getTimezoneInfo,
+  PageComponent
+} from '@shared/public-api';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
@@ -77,6 +83,10 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   configTemplatesObservable: Observable<any[]>;
 
+  templateTitleChanged: boolean;
+
+  timeDiff: number = 0;
+
   get itemsSchedulerForm(): FormArray {
     return this.form?.get('items') as FormArray;
   }
@@ -91,10 +101,27 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   }
 
   ngOnInit() {
+    this.getTimezoneDiff();
     this.getDaysOfTheWeek();
-
     this.buildSchedulerForm();
     this.buildTemplateForm();
+  }
+
+  private getTimezoneDiff() {
+    const timezone = getTimezoneInfo(this.ctx.dashboard.dashboardTimewindow?.timezone);
+    if (timezone) {
+      this.setTimezone(timezone);
+    }
+    this.ctx.dashboard.dashboardTimewindowChanged.subscribe(timewindow => {
+      const timezone = getTimezoneInfo(timewindow.timezone);
+      if (timezone) {
+        this.setTimezone(timezone);
+      }
+    });
+  }
+
+  private setTimezone(timezone) {
+    this.timeDiff = timezone.nOffset/60;
   }
 
   private getDaysOfTheWeek() {
@@ -109,8 +136,11 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   private buildTemplateForm() {
     this.templateForm = this.fb.group({
-      key: ['', []],
-      value: ['', []]
+      key: [null, []],
+      value: [null, []]
+    });
+    this.templateForm.get('key').valueChanges.subscribe(() => {
+      this.templateTitleChanged = true;
     });
   }
 
@@ -180,15 +210,20 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     for (let key in attributes) {
       let index = this.allDaysValue.indexOf(key);
       if (index > -1) {
-        const data = Object.assign({}, attributes[key]);
+        let data = Object.assign({}, attributes[key]);
         if (data?.openTime) {
           data.enabled = true;
           data.dayOfWeek = key;
           this.itemsSchedulerForm.at(index).patchValue(data);
           this.enableItems(index);
         } else {
+          data = {};
           data.enabled = false;
           data.dayOfWeek = key;
+          data.openFlow = null;
+          data.openTime = null;
+          data.closeFlow = null;
+          data.closeTime = null;
           this.itemsSchedulerForm.at(index).patchValue(data);
           this.disableItems(index);
         }
@@ -257,10 +292,10 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
         let newValueStringify = JSON.stringify(this.orderKeys(newValue));
         let initValueStringify = JSON.stringify(this.orderKeys(this.initConfigAttributes[key]));
         if (newValueStringify !== initValueStringify) {
-          ruleEngineRequestData[key] = newValue;
+          ruleEngineRequestData[key] = this.transformTimeToUTCTimezone(newValue);
         }
       } else {
-        ruleEngineRequestData[key] = newValue;
+        ruleEngineRequestData[key] = this.transformTimeToUTCTimezone(newValue);
       }
     });
 
@@ -283,7 +318,35 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
     );
   }
 
+  private transformTimeToUTCTimezone(value): RadiatorSmartThermostatData {
+    let valueCopy = {...value};
+    if (this.timeDiff && valueCopy?.openTime && valueCopy?.closeTime) {
+      var [openTimeHour, openTimeMinute]  = valueCopy.openTime.split(':');
+      var [closeTimeHour, closeTimeMinute] = valueCopy.closeTime.split(':');
+      var newOpenTimeHour = openTimeHour - this.timeDiff;
+      var newCloseTimeHour = closeTimeHour - this.timeDiff;
+      if (newOpenTimeHour < 0) {
+        newOpenTimeHour = 24 + newOpenTimeHour;
+      } else if (newOpenTimeHour > 23) {
+        newOpenTimeHour = newOpenTimeHour - 24;
+      }
+      if (newCloseTimeHour < 0) {
+        newCloseTimeHour = 24 + newCloseTimeHour;
+      } else if (newCloseTimeHour > 23) {
+        newCloseTimeHour = newCloseTimeHour - 24;
+      }
+      valueCopy.openTime = newOpenTimeHour + ':' + openTimeMinute;
+      valueCopy.closeTime = newCloseTimeHour + ':' + closeTimeMinute;
+      if (newOpenTimeHour < 10) valueCopy.openTime = '0' + valueCopy.openTime;
+      if (newCloseTimeHour < 10) valueCopy.closeTime = '0' + valueCopy.closeTime;
+      return valueCopy;
+    } else {
+      return value;
+    }
+  }
+
   saveTemplate() {
+    this.templateTitleChanged = false;
     const currentTemplate = this.prepareTemplate();
     this.templatesAttributes.value = this.templatesAttributes.value.concat(currentTemplate);
     this.saveOwnerTemplatesAttributes();
@@ -320,6 +383,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   deleteTemplate() {
     const targetTemplate = this.templateForm.get('value')?.value;
     this.templatesAttributes.value = this.templatesAttributes.value.filter(template => template.key !== targetTemplate?.key);
+    this.templateForm.get('value').setValue(null);
     this.saveOwnerTemplatesAttributes();
   }
 

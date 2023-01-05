@@ -68,7 +68,7 @@
             </mat-form-field>
             <button mat-raised-button color="primary"
                     (click)="saveTemplate()"
-                    [disabled]="(isLoading$ | async) || !templateForm.get('key').value?.length">
+                    [disabled]="(isLoading$ | async) || !templateForm.get('key').value?.length || !templateTitleChanged">
               Save as template
             </button>
           </div>
@@ -94,6 +94,7 @@
           </div>
         </div>
       </form>
+      <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async"></mat-progress-bar>
     </mat-expansion-panel>
   </mat-accordion>
   <div mat-dialog-actions fxLayoutAlign="end center">
