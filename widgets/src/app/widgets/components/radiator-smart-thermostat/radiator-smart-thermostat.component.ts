@@ -130,7 +130,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   private setHourDiffFromBrowserTimezone() {
     const date = new Date();
-    this.hourDiff = date.getTimezoneOffset()/60;
+    this.hourDiff = (date.getTimezoneOffset()/60)*-1;
   }
 
   private getDaysOfTheWeek() {
