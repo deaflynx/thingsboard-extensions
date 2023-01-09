@@ -85,7 +85,7 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   templateTitleChanged: boolean;
 
-  timeDiff: number = 0;
+  hourDiff: number = 0;
 
   get itemsSchedulerForm(): FormArray {
     return this.form?.get('items') as FormArray;
@@ -110,18 +110,27 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   private getTimezoneDiff() {
     const timezone = getTimezoneInfo(this.ctx.dashboard.dashboardTimewindow?.timezone);
     if (timezone) {
-      this.setTimezone(timezone);
+      this.setHourDiffFromTimewindowTimezone(timezone);
+    } else {
+      this.setHourDiffFromBrowserTimezone();
     }
     this.ctx.dashboard.dashboardTimewindowChanged.subscribe(timewindow => {
       const timezone = getTimezoneInfo(timewindow.timezone);
       if (timezone) {
-        this.setTimezone(timezone);
+        this.setHourDiffFromTimewindowTimezone(timezone);
+      } else {
+        this.setHourDiffFromBrowserTimezone();
       }
     });
   }
 
-  private setTimezone(timezone) {
-    this.timeDiff = timezone.nOffset/60;
+  private setHourDiffFromTimewindowTimezone(timezone) {
+    this.hourDiff = timezone.nOffset/60;
+  }
+
+  private setHourDiffFromBrowserTimezone() {
+    const date = new Date();
+    this.hourDiff = date.getTimezoneOffset()/60;
   }
 
   private getDaysOfTheWeek() {
@@ -320,11 +329,11 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   private transformTimeToUTCTimezone(value): RadiatorSmartThermostatData {
     let valueCopy = {...value};
-    if (this.timeDiff && valueCopy?.openTime && valueCopy?.closeTime) {
+    if (this.hourDiff && valueCopy?.openTime && valueCopy?.closeTime) {
       var [openTimeHour, openTimeMinute]  = valueCopy.openTime.split(':');
       var [closeTimeHour, closeTimeMinute] = valueCopy.closeTime.split(':');
-      var newOpenTimeHour = openTimeHour - this.timeDiff;
-      var newCloseTimeHour = closeTimeHour - this.timeDiff;
+      var newOpenTimeHour = openTimeHour - this.hourDiff;
+      var newCloseTimeHour = closeTimeHour - this.hourDiff;
       if (newOpenTimeHour < 0) {
         newOpenTimeHour = 24 + newOpenTimeHour;
       } else if (newOpenTimeHour > 23) {
