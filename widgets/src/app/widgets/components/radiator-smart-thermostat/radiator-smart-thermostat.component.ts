@@ -22,8 +22,7 @@ import {
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
-import { Observable } from "rxjs";
-import { map } from "rxjs/operators";
+import { Observable, of } from 'rxjs';
 
 interface RadiatorSmartThermostatData {
   openTime: string,
@@ -79,7 +78,10 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
 
   openCloseTimeErrorText: string = "Open time can't be later than close";
 
-  templatesAttributes: any;
+  templatesAttributes = {
+    key: this.templateConfigAttributes,
+    value: []
+  };
 
   configTemplatesObservable: Observable<any[]>;
 
@@ -206,13 +208,13 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
   }
 
   private getTemplates() {
-    this.configTemplatesObservable = this.attributeService.getEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templateConfigAttributes])
-      .pipe(
-        map(attributes => {
+    this.attributeService.getEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templateConfigAttributes])
+      .subscribe(attributes => {
+        if (attributes.length) {
           this.templatesAttributes = attributes[0];
-          return attributes[0].value;
-        })
-      );
+          this.configTemplatesObservable = of(this.templatesAttributes.value);
+        }
+      })
   }
 
   private patchFormValues(attributes: any) {
