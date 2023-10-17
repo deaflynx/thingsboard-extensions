@@ -5,21 +5,19 @@
 -->
 <form [formGroup]="form" fxLayout="column">
   <div fxLayout="column">
-    <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="space-between center" fxLayoutAlign.xs="center start">
-      <mat-label class="cell-header" fxFlex="20">Day</mat-label>
-      <mat-label class="cell-header" fxFlex="20">Open Time</mat-label>
-      <mat-label class="cell-header" fxFlex="20">Open Flow</mat-label>
-      <mat-label class="cell-header" fxFlex="20">Close Time</mat-label>
-      <mat-label class="cell-header" fxFlex="20">Close Flow</mat-label>
+    <div fxLayoutGap="16px" fxLayoutAlign="space-between center">
+      <mat-label class="cell-header" fxFlex="10" fxFlex.xs="30">Day</mat-label>
+      <mat-label class="cell-header" fxFlex="45" fxFlex.xs="35">Open Time</mat-label>
+      <mat-label class="cell-header" fxFlex="45" fxFlex.xs="35">Close Time</mat-label>
     </div>
   </div>
-  <mat-divider style="margin-top: 1em"></mat-divider>
-  <div *ngFor="let day of allDaysIndex; let $index = index" fxLayout="column" formArrayName="items">
-    <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" [formGroupName]="''+day" fxLayoutAlign="space-between center" fxLayoutAlign.xs="center start">
-      <mat-checkbox fxFlex="20" formControlName="enabled" (change)="changeCustomScheduler($event, day)" >
-        {{ dayOfWeekTranslationsArray[day] | translate | titlecase }}
+  <mat-divider style="margin-top: 4px"></mat-divider>
+  <div *ngFor="let day of allDaysIndex; let $index = index" formArrayName="items" fxLayout="column">
+    <div [formGroupName]="''+day" fxLayoutGap="16px" fxLayoutAlign="space-between center">
+      <mat-checkbox fxFlex="10" fxFlex.xs="30" formControlName="enabled" (change)="changeCustomScheduler($event, day)">
+        {{ dayOfWeekTranslationsArray[day] | translate | titlecase | slice:0:3 }}
       </mat-checkbox>
-      <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+      <mat-form-field fxFlex="45" fxFlex.xs="35">
         <input matInput type="text" formControlName="openTime" required>
         <mat-error *ngIf="itemsSchedulerForm.at($index).get('openTime').hasError('pattern')">
           {{ timeFormatErrorText }}
@@ -28,12 +26,7 @@
           {{ openCloseTimeErrorText }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
-        <mat-select formControlName="openFlow" required>
-          <mat-option *ngFor="let value of percentages" [value]="value">{{value}}%</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+      <mat-form-field fxFlex="45" fxFlex.xs="35">
         <input matInput type="text" formControlName="closeTime" required>
         <mat-error *ngIf="itemsSchedulerForm.at($index).get('closeTime').hasError('pattern')">
           {{ timeFormatErrorText }}
@@ -42,12 +35,14 @@
           {{ openCloseTimeErrorText }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex="20" fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
-          <mat-select formControlName="closeFlow" required>
-            <mat-option *ngFor="let value of percentages" [value]="value">{{value}}%</mat-option>
-          </mat-select>
-      </mat-form-field>
     </div>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-raised-button color="primary"
+            (click)="save()"
+            [disabled]="(isLoading$ | async) || form.invalid || !form.dirty">
+      {{ 'action.save' | translate }}
+    </button>
   </div>
   <mat-accordion style="padding: 1em 0 1em 0">
     <mat-expansion-panel [expanded]="false">
@@ -55,7 +50,7 @@
         <mat-panel-title>
           <div>Configuration templates</div>
         </mat-panel-title>
-        <mat-panel-description>
+        <mat-panel-description fxHide.xs>
           Save and load scheduler configuration as template
         </mat-panel-description>
       </mat-expansion-panel-header>
@@ -97,11 +92,4 @@
       <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async"></mat-progress-bar>
     </mat-expansion-panel>
   </mat-accordion>
-  <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            (click)="save()"
-            [disabled]="(isLoading$ | async) || form.invalid || !form.dirty">
-      {{ 'action.save' | translate }}
-    </button>
-  </div>
 </form>
