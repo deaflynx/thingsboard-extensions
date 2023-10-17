@@ -8,10 +8,12 @@ import { SharedModule } from '@shared/public-api';
 import { RadiatorSmartThermostatComponent } from './radiator-smart-thermostat.component';
 import { ButtonModule } from 'primeng/button';
 import { AccordionModule } from 'primeng/accordion';
+import { RadiatorSmartThermostatV2Component } from './radiator-smart-thermostat-v2.component';
 
 @NgModule({
   declarations: [
-    RadiatorSmartThermostatComponent
+    RadiatorSmartThermostatComponent,
+    RadiatorSmartThermostatV2Component
   ],
   imports: [
     CommonModule,
@@ -20,7 +22,8 @@ import { AccordionModule } from 'primeng/accordion';
     AccordionModule
   ],
   exports: [
-    RadiatorSmartThermostatComponent
+    RadiatorSmartThermostatComponent,
+    RadiatorSmartThermostatV2Component
   ]
 })
 export class RadiatorSmartThermostatModule {
