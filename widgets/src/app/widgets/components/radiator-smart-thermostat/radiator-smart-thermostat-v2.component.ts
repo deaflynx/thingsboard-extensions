@@ -76,7 +76,7 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
 
   timeFormatErrorText: string = "24-hour format is required e.g. 23:59";
 
-  openCloseTimeErrorText: string = "Open time can't be later than close";
+  openCloseTimeErrorText: string = "Operation Time can't be later than Close";
 
   templatesAttributes = {
     key: this.templateConfigAttributes,
@@ -88,6 +88,9 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
   templateTitleChanged: boolean;
 
   hourDiff: number = 0;
+
+  private defaultOpenFlow = 100;
+  private defaultCloseFlow = 0;
 
   get itemsSchedulerForm(): FormArray {
     return this.form?.get('items') as FormArray;
@@ -188,8 +191,8 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
           const defaultDayConfig = {
             "openTime": "08:00",
             "closeTime": "18:00",
-            "openFlow": 100,
-            "closeFlow": 0
+            "openFlow": this.defaultOpenFlow,
+            "closeFlow": this.defaultCloseFlow
           };
           value = {
             monday: defaultDayConfig,
@@ -271,6 +274,8 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
     this.itemsSchedulerForm.at(index).get('closeTime').enable({emitEvent});
     this.itemsSchedulerForm.at(index).get('openFlow').enable({emitEvent});
     this.itemsSchedulerForm.at(index).get('closeFlow').enable({emitEvent});
+    this.itemsSchedulerForm.at(index).get('openFlow').patchValue(this.defaultOpenFlow);
+    this.itemsSchedulerForm.at(index).get('closeFlow').patchValue(this.defaultCloseFlow);
   }
 
   save() {
@@ -292,8 +297,8 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
         newValue = {
           openTime: value.openTime,
           closeTime: value.closeTime,
-          openFlow: 100,
-          closeFlow: 0
+          openFlow: this.defaultOpenFlow,
+          closeFlow: this.defaultCloseFlow
         }
       } else {
         newValue = this.emptyValue;
