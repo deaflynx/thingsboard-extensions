@@ -292,8 +292,8 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
         newValue = {
           openTime: value.openTime,
           closeTime: value.closeTime,
-          openFlow: value.openFlow,
-          closeFlow: value.closeFlow
+          openFlow: 100,
+          closeFlow: 0
         }
       } else {
         newValue = this.emptyValue;
@@ -354,61 +354,6 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
     } else {
       return value;
     }
-  }
-
-  saveTemplate() {
-    this.templateTitleChanged = false;
-    const currentTemplate = this.prepareTemplate();
-    this.templatesAttributes.value = this.templatesAttributes.value.concat(currentTemplate);
-    this.saveOwnerTemplatesAttributes();
-  }
-
-  private prepareTemplate(): AttributeData {
-    const key = this.templateForm.get('key').value;
-    const formValues = this.form.get('items').value;
-    const value = {};
-    formValues.map(config => {
-      let key = config.dayOfWeek;
-      let newValue: RadiatorSmartThermostatData | string;
-      if (config.openTime) {
-        newValue = {
-          openTime: config.openTime,
-          closeTime: config.closeTime,
-          openFlow: config.openFlow,
-          closeFlow: config.closeFlow
-        }
-      } else {
-        newValue = this.emptyValue;
-      }
-      value[key] = newValue;
-    });
-    return {key, value} as AttributeData;
-  }
-
-  loadTemplate() {
-    const targetTemplate = this.templateForm.get('value')?.value;
-    this.patchFormValues(targetTemplate?.value);
-    this.updateForm();
-  }
-
-  deleteTemplate() {
-    const targetTemplate = this.templateForm.get('value')?.value;
-    this.templatesAttributes.value = this.templatesAttributes.value.filter(template => template.key !== targetTemplate?.key);
-    this.templateForm.get('value').setValue(null);
-    this.saveOwnerTemplatesAttributes();
-  }
-
-  private saveOwnerTemplatesAttributes() {
-    this.attributeService.saveEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templatesAttributes])
-      .subscribe(() => {
-        this.getTemplates();
-      });
-  }
-
-  private updateForm() {
-    this.form.markAsTouched();
-    this.form.markAsDirty();
-    this.ctx.detectChanges();
   }
 
   private validateOpenCloseTime(i: number, control: string): ValidatorFn {

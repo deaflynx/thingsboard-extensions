@@ -7,7 +7,7 @@
   <div fxLayout="column">
     <div fxLayoutGap="16px" fxLayoutAlign="space-between center">
       <mat-label class="cell-header" fxFlex="10" fxFlex.xs="30">Day</mat-label>
-      <mat-label class="cell-header" fxFlex="45" fxFlex.xs="35">Open Time</mat-label>
+      <mat-label class="cell-header" fxFlex="45" fxFlex.xs="35">Operation Time</mat-label>
       <mat-label class="cell-header" fxFlex="45" fxFlex.xs="35">Close Time</mat-label>
     </div>
   </div>
@@ -44,52 +44,55 @@
       {{ 'action.save' | translate }}
     </button>
   </div>
-  <mat-accordion style="padding: 1em 0 1em 0">
-    <mat-expansion-panel [expanded]="false">
-      <mat-expansion-panel-header>
-        <mat-panel-title>
-          <div>Configuration templates</div>
-        </mat-panel-title>
-        <mat-panel-description fxHide.xs>
-          Save and load scheduler configuration as template
-        </mat-panel-description>
-      </mat-expansion-panel-header>
-      <form [formGroup]="templateForm">
-        <div fxLayout="column">
-          <div  fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start">
-            <mat-form-field appearance="fill">
-              <mat-label>Current config template title</mat-label>
-              <input matInput type="text" formControlName="key">
-            </mat-form-field>
-            <button mat-raised-button color="primary"
-                    (click)="saveTemplate()"
-                    [disabled]="(isLoading$ | async) || !templateForm.get('key').value?.length || !templateTitleChanged">
-              Save as template
-            </button>
+  <div style="padding: 16px 0 16px 0">
+    <mat-accordion>
+      <mat-expansion-panel [expanded]="false">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <div>Configuration templates</div>
+          </mat-panel-title>
+          <mat-panel-description fxHide.xs>
+            Save and load scheduler configuration as template
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <form [formGroup]="templateForm">
+          <div fxLayout="column">
+            <div  fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start">
+              <mat-form-field appearance="fill">
+                <mat-label>Current config template title</mat-label>
+                <input matInput type="text" formControlName="key">
+              </mat-form-field>
+              <button mat-raised-button color="primary"
+                      (click)="saveTemplate()"
+                      [disabled]="(isLoading$ | async) || !templateForm.get('key').value?.length || !templateTitleChanged">
+                Save as template
+              </button>
+            </div>
+            <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center" fxLayout.xs="column"  fxLayoutAlign.xs="center start">
+              <mat-form-field appearance="fill" class="mat-block">
+                <mat-label>Select template</mat-label>
+                <mat-select formControlName="value">
+                  <mat-option *ngFor="let template of configTemplatesObservable | async" [value]="template">
+                    {{ template.key }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <button mat-raised-button color="warn" type="button"
+                      (click)="deleteTemplate()"
+                      [disabled]="(isLoading$ | async) || !templateForm.get('value').value?.key?.length">
+                {{ 'action.delete' | translate }}
+              </button>
+              <button mat-raised-button color="primary" type="button"
+                      (click)="loadTemplate()"
+                      [disabled]="(isLoading$ | async) || !templateForm.get('value').value?.key?.length">
+                Load
+              </button>
+            </div>
           </div>
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center" fxLayout.xs="column"  fxLayoutAlign.xs="center start">
-            <mat-form-field appearance="fill" class="mat-block">
-              <mat-label>Select template</mat-label>
-              <mat-select formControlName="value">
-                <mat-option *ngFor="let template of configTemplatesObservable | async" [value]="template">
-                  {{ template.key }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <button mat-raised-button color="warn" type="button"
-                    (click)="deleteTemplate()"
-                    [disabled]="(isLoading$ | async) || !templateForm.get('value').value?.key?.length">
-              {{ 'action.delete' | translate }}
-            </button>
-            <button mat-raised-button color="primary" type="button"
-                    (click)="loadTemplate()"
-                    [disabled]="(isLoading$ | async) || !templateForm.get('value').value?.key?.length">
-              Load
-            </button>
-          </div>
-        </div>
-      </form>
-      <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async"></mat-progress-bar>
-    </mat-expansion-panel>
-  </mat-accordion>
+        </form>
+        <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async"></mat-progress-bar>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </div>
+
 </form>

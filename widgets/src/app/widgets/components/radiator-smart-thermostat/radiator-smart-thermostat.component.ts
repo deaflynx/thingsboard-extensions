@@ -292,8 +292,8 @@ export class RadiatorSmartThermostatComponent extends PageComponent implements O
         newValue = {
           openTime: value.openTime,
           closeTime: value.closeTime,
-          openFlow: value.openFlow,
-          closeFlow: value.closeFlow
+          openFlow: 100,
+          closeFlow: 0
         }
       } else {
         newValue = this.emptyValue;
