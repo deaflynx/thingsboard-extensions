@@ -164,8 +164,8 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
       dayOfWeek: [this.allDaysValue[index]],
       openTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex), this.validateOpenCloseTime(index, 'openTime')]],
       closeTime: [null, [Validators.required, Validators.pattern(this.validTimeRegex), this.validateOpenCloseTime(index, 'closeTime')]],
-      openFlow: [null, [Validators.required]],
-      closeFlow: [null, [Validators.required]]
+      openFlow: [null, []],
+      closeFlow: [null, []]
     });
   }
 
