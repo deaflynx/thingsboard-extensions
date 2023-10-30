@@ -4,18 +4,12 @@
 
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { MatCheckboxChange } from '@angular/material/checkbox';
-import {
-  FormArray,
-  FormBuilder, FormControl,
-  FormGroup,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
-import { AppState, AttributeService, DeviceService, RuleEngineService } from '@core/public-api';
+import { FormArray, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { AppState, AssetService, AttributeService, DeviceService, RuleEngineService } from '@core/public-api';
 import {
   AttributeData,
   AttributeScope,
-  Device,
+  EntityType,
   getTimezoneInfo,
   PageComponent
 } from '@shared/public-api';
@@ -40,7 +34,7 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
 
   @Input() ctx: WidgetContext;
 
-  device: Device;
+  entity: any;
 
   form: FormGroup;
 
@@ -100,6 +94,7 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
               private fb: FormBuilder,
               private attributeService: AttributeService,
               private deviceService: DeviceService,
+              private assetService: AssetService,
               private ruleEngineService: RuleEngineService,
               private translate: TranslateService) {
     super(store);
@@ -172,8 +167,14 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
   ngAfterViewInit() {
     const entityId = this.ctx.stateController.getStateParams().entityId;
     if (entityId?.id) {
-      this.deviceService.getDevice(entityId.id).subscribe(device => {
-        this.device = device;
+      let task: Observable<any>;
+      if (entityId.entityType === EntityType.DEVICE) {
+        task = this.deviceService.getDevice(entityId.id);
+      } else if (entityId.entityType === EntityType.ASSET) {
+        task = this.assetService.getAsset(entityId.id);
+      }
+      task.subscribe(entity => {
+        this.entity = entity;
         this.getThermostatAttributes();
         this.getTemplates();
       });
@@ -181,7 +182,7 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
   }
 
   private getThermostatAttributes() {
-    this.attributeService.getEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, [this.thermostatConfigAttributes]).subscribe(
+    this.attributeService.getEntityAttributes(this.entity.id, AttributeScope.SERVER_SCOPE, [this.thermostatConfigAttributes]).subscribe(
       attributes => {
         let value = {};
         if (attributes.length) {
@@ -211,7 +212,7 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
   }
 
   private getTemplates() {
-    this.attributeService.getEntityAttributes(this.device.ownerId, AttributeScope.SERVER_SCOPE, [this.templateConfigAttributes])
+    this.attributeService.getEntityAttributes(this.entity.ownerId, AttributeScope.SERVER_SCOPE, [this.templateConfigAttributes])
       .subscribe(attributes => {
         if (attributes.length) {
           this.templatesAttributes = attributes[0];
@@ -281,8 +282,8 @@ export class RadiatorSmartThermostatV2Component extends PageComponent implements
   save() {
     this.form.markAsPristine();
     const [deviceAttributesData, ruleEngineRequestData] = [...this.prepareData()];
-    this.attributeService.saveEntityAttributes(this.device.id, AttributeScope.SERVER_SCOPE, [deviceAttributesData]).subscribe();
-    this.ruleEngineService.makeRequestToRuleEngineFromEntity(this.device.id, ruleEngineRequestData).subscribe();
+    this.attributeService.saveEntityAttributes(this.entity.id, AttributeScope.SERVER_SCOPE, [deviceAttributesData]).subscribe();
+    this.ruleEngineService.makeRequestToRuleEngineFromEntity(this.entity.id, ruleEngineRequestData).subscribe();
   }
 
   private prepareData(): Array<AttributeData | any> {
